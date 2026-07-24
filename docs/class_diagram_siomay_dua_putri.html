@@ -1,0 +1,89 @@
+<style>
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+<h2 class="sr-only">Class diagram sistem Siomay Dua Putri: Admin, Produk, VarianProduk, Pesanan, ItemPesanan, Transaksi, dan Pengaturan beserta relasinya</h2>
+<div id="cd"></div>
+<script type="module">
+import mermaid from 'https://esm.sh/mermaid@11/dist/mermaid.esm.min.mjs';
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+await document.fonts.ready;
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'base',
+  fontFamily: '"Anthropic Sans", sans-serif',
+  themeVariables: {
+    darkMode: dark,
+    fontSize: '13px',
+    fontFamily: '"Anthropic Sans", sans-serif',
+    lineColor: dark ? '#9c9a92' : '#73726c',
+    textColor: dark ? '#c2c0b6' : '#3d3d3a',
+  },
+});
+const { svg } = await mermaid.render('cd-svg', `classDiagram
+  class Admin {
+    +int id
+    +string nama_toko
+    +string username
+    +string password_hash
+    +string nomor_hp
+  }
+  class Produk {
+    +int id
+    +string nama
+    +string kategori
+    +decimal harga
+    +bool status_aktif
+  }
+  class VarianProduk {
+    +int id
+    +int produk_id
+    +string nama_varian
+  }
+  class Pengaturan {
+    +int id
+    +decimal minimum_order
+    +decimal pajak_persen
+    +bool pajak_aktif
+    +string alamat_umkm
+  }
+  class Pesanan {
+    +int id
+    +string kode_pesanan
+    +string nama_pembeli
+    +string nomor_hp
+    +string metode
+    +string alamat
+    +string catatan
+    +decimal subtotal
+    +decimal pajak
+    +decimal total
+    +string status
+  }
+  class ItemPesanan {
+    +int id
+    +int pesanan_id
+    +int produk_id
+    +int varian_id
+    +int jumlah
+    +decimal harga_satuan
+    +decimal subtotal_item
+  }
+  class Transaksi {
+    +int id
+    +int pesanan_id
+    +string midtrans_order_id
+    +string status_pembayaran
+    +decimal mdr_persen
+    +decimal nominal_diterima
+  }
+  Admin "1" --> "*" Produk : mengelola
+  Admin "1" --> "1" Pengaturan : mengatur
+  Admin "1" --> "*" Pesanan : memantau
+  Produk "1" --> "*" VarianProduk : punya
+  Pesanan "1" --> "*" ItemPesanan : berisi
+  ItemPesanan "*" --> "1" Produk : mereferensi
+  ItemPesanan "*" --> "0..1" VarianProduk : varian opsional
+  Pesanan "1" --> "1" Transaksi : menghasilkan
+`);
+document.getElementById('cd').innerHTML = svg;
+</script>
