@@ -39,25 +39,29 @@ Scan QR di gerobak → pilih salah satu:
 3. Transaksi **anonim** — tidak masuk riwayat pesanan berbasis pelanggan, tapi **wajib tercatat sebagai bagian dari total omzet harian** di laporan (dana tetap masuk ke rekening/merchant QRIS yang sama).
 
 ### 3.3 Jalur B — Pesan Antar/Pesanan Banyak
+
+**Berlaku pre-order untuk kedua metode (Ambil Sendiri maupun Diantar) — sistem TIDAK menerima pesanan untuk hari yang sama.**
+
 1. **Etalase**: Siomay, Batagor, Lumpia (varian Frozen/Digoreng khusus Lumpia). Produk nonaktif tampil abu-abu, tidak bisa dipilih.
 2. Kontrol jumlah (+/-) per produk, bisa lintas kategori dalam satu transaksi.
 3. **Kolom catatan** untuk permintaan rasa saja — instruksi eksplisit bahwa kolom ini BUKAN untuk alamat.
 4. **Validasi minimum Rp100.000** — tombol lanjut nonaktif + peringatan jika belum tercapai.
-5. Ringkasan: **subtotal → pajak (opsional, default 10% jika admin aktifkan) → total bayar** — total inilah yang dikirim ke Midtrans untuk generate kode QRIS.
-6. Pilih metode penerimaan: **Ambil Sendiri** atau **Diantar**.
+5. **Pilih tanggal pesanan dibutuhkan** via kalender — hanya tanggal **setelah hari ini** yang bisa dipilih (H+1 minimal, tidak menerima pesanan untuk hari yang sama).
+6. Sistem menampilkan **ringkasan pesanan**: subtotal → pajak (opsional, default 10% jika admin aktifkan) → total, beserta tanggal kebutuhan yang dipilih — total inilah yang dikirim ke Midtrans untuk generate kode QRIS.
+7. Pilih metode penerimaan: **Ambil Sendiri** atau **Diantar**.
 
-**4.3.a Ambil Sendiri**
+**4.7.a Ambil Sendiri**
 1. Isi nama + nomor HP (nomor HP wajib).
 2. Tampilkan alamat & lokasi UMKM di peta.
 3. Lanjut ke halaman pembayaran QRIS.
-4. Setelah status `lunas` → pesanan otomatis masuk dashboard admin.
+4. Setelah status `lunas` → pesanan otomatis masuk dashboard admin (dengan tanggal kebutuhan tampil untuk perencanaan produksi).
 5. Tampilkan halaman bukti transaksi.
 6. Layar status "Menunggu pesanan Anda" + tombol WA otomatis: *"Jam berapa bisa saya ambil?"*
 
-**4.3.b Diantar**
+**4.7.b Diantar**
 1. Isi nama penerima, nomor HP, alamat lengkap, pilih lokasi via peta.
 2. Lanjut ke pembayaran QRIS.
-3. Setelah `lunas` → masuk dashboard admin.
+3. Setelah `lunas` → masuk dashboard admin (dengan tanggal kebutuhan tampil untuk perencanaan produksi).
 4. Tampilkan halaman bukti transaksi.
 5. Tombol WA otomatis: *"Kapan pesanan saya diantarkan?"*
 6. Di sisi admin: tombol "Pesan Maxim" membuka Maxim dengan alamat pelanggan sudah terisi (sandbox API Maxim — dikonfirmasi tersedia, lihat §7).
@@ -112,6 +116,7 @@ Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak bole
 - **Pembeli tanpa login**: final, ini fitur/nilai jual, bukan kekurangan.
 - **Strategi jaringan demo**: aplikasi **di-deploy ke hosting publik SEBELUM hari demo** (bukan localhost). Hotspot HP aman dipakai sebagai koneksi klien karena webhook Midtrans tidak lewat jalur ini lagi. WiFi venue sebagai cadangan.
 - **API Maxim**: dikonfirmasi tersedia sandbox-nya — siap diimplementasikan, rujuk dokumentasi teknis persis (endpoint, auth, payload alamat) saat implementasi.
+- **Pre-order wajib**: sistem TIDAK menerima pesanan untuk hari yang sama, berlaku untuk kedua metode (Ambil Sendiri & Diantar). Pembeli wajib pilih tanggal kebutuhan (minimal H+1) via kalender sebelum memilih metode penerimaan. Tidak berlaku untuk jalur Bayar QRIS di Tempat (itu transaksi langsung/walk-in).
 - **Stack**: CodeIgniter 4.7.4, XAMPP, path lokal `A:\myrealxampp\htdocs\somayduaputri`.
 - **Fitur QRIS/Midtrans TIDAK BISA jalan tanpa internet sama sekali** (termasuk sandbox) — bukan soal localhost vs hosting, tapi koneksi ke server Midtrans wajib ada. Fitur lain (etalase, dashboard, riwayat, laporan) bisa offline/localhost.
 
@@ -119,9 +124,26 @@ Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak bole
 
 ## 8. Pertanyaan Terbuka — Perlu Keputusan Pengguna Sebelum Diimplementasikan
 
-1. **Definisi "grey out" etalase**: toggle manual admin, otomatis berdasarkan jam operasional, atau kombinasi keduanya?
+1. ~~Definisi "grey out" etalase~~ — **SUDAH DIPUTUSKAN, lihat §8.1 di bawah.**
 2. **Mekanisme reset password admin**: tidak ada email institusional — perlu mekanisme alternatif (contoh: kombinasi keamanan sederhana / pertanyaan keamanan). Perlu diputuskan sebelum implementasi F11.
 3. **Format demo ke panitia lomba**: apakah wajib live-online, atau video rekaman cadangan diterima jika ada kendala jaringan?
+
+### 8.1 Keputusan — Definisi "Grey Out" Etalase (final)
+
+**Kombinasi**: produk tampil abu-abu (tidak bisa dipilih) jika **salah satu** dari dua kondisi berikut terpenuhi:
+1. Admin menonaktifkan produk secara manual (`produk.status_aktif = 0`), ATAU
+2. Waktu saat ini berada **di luar jam operasional toko** (diatur admin lewat Pengaturan)
+
+Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk harus nonaktif, produk itu abu-abu, terlepas dari kondisi yang lain.
+
+**Perubahan skema** (lihat juga §9 yang sudah diupdate): tabel `pengaturan` perlu tambahan 2 kolom:
+- `jam_buka` (time) — jam toko mulai buka
+- `jam_tutup` (time) — jam toko tutup
+
+**Catatan implementasi**:
+- Status aktif "final" produk yang ditampilkan ke pembeli = `status_aktif (dari DB) DAN dalam rentang jam_buka–jam_tutup (dihitung real-time di server)`.
+- Jangan cache status ini terlalu lama di sisi klien — minimal refresh saat halaman etalase dimuat ulang, supaya produk otomatis abu-abu begitu lewat jam tutup tanpa perlu aksi admin.
+- Kalau `jam_buka`/`jam_tutup` belum diisi admin (nilai NULL), anggap toko selalu buka (skip pengecekan jam) — supaya default behavior tidak tiba-tiba mengunci semua produk sebelum admin sempat isi Pengaturan.
 
 **Jika Claude Code menemui ambiguitas bisnis baru di luar yang tercantum di file ini — STOP dan tanya user dulu, jangan diasumsikan sendiri.**
 
@@ -157,6 +179,8 @@ Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak bole
 - pajak_persen (decimal) — default 10
 - pajak_aktif (bool)
 - alamat_umkm (string)
+- jam_buka (time, nullable) — *ditambahkan untuk logika grey-out etalase, lihat §8.1*
+- jam_tutup (time, nullable) — *ditambahkan untuk logika grey-out etalase, lihat §8.1*
 
 **pesanan**
 - id (PK)
@@ -166,6 +190,7 @@ Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak bole
 - metode (string) — bayar_di_tempat / ambil_sendiri / diantar
 - alamat (string, nullable — hanya untuk metode diantar)
 - catatan (string, nullable)
+- tanggal_dibutuhkan (date, nullable) — *ditambahkan untuk pre-order, wajib diisi untuk metode ambil_sendiri & diantar (minimal H+1, tidak boleh hari yang sama); NULL untuk bayar_di_tempat karena jalur itu tidak pre-order*
 - subtotal (decimal)
 - pajak (decimal)
 - total (decimal)
@@ -217,13 +242,14 @@ Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak bole
 | F9 | Halaman bukti transaksi/struk | Pembeli |
 | F10 | Tombol hubungi penjual via WA (otomatis) | Pembeli |
 | F11 | Registrasi & login admin | Admin |
-| F12 | Dashboard: pesanan berstatus lunas real-time | Admin |
+| F12 | Dashboard: pesanan berstatus lunas real-time, menampilkan tanggal kebutuhan pesanan untuk perencanaan produksi | Admin |
 | F13 | Riwayat transaksi dengan filter | Admin |
 | F14 | Modul laporan (ringkasan, filter tanggal, export) | Admin |
 | F15 | Tombol hubungi pelanggan via WA | Admin |
 | F16 | Tombol "Pesan Maxim" dengan alamat otomatis terisi | Admin |
 | F17 | Navigasi back persisten tanpa kehilangan data form | Pembeli |
 | F18 | Perhitungan pajak opsional (toggle + persentase diatur admin) | Pembeli (tampil jika aktif) / Admin (atur) |
+| F19 | Pemilihan tanggal pesanan dibutuhkan (kalender, hanya H+1 ke atas) — wajib untuk Ambil Sendiri & Diantar, tidak berlaku untuk Bayar di Tempat | Pembeli |
 
 ---
 
