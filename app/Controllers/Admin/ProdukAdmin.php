@@ -33,7 +33,7 @@ class ProdukAdmin extends BaseController
             'produk' => [
                 'id'          => '',
                 'nama'        => '',
-                'kategori'    => 'Siomay',
+                'kategori'    => 'Somay Sapi',
                 'harga'       => '',
                 'status_aktif'=> 1,
             ],

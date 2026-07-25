@@ -34,7 +34,7 @@
         <div class="status-banner status-closed">Toko sedang tutup. <?= esc($alasanTutup) ?></div>
     <?php endif; ?>
 
-    <?php foreach (['Siomay', 'Batagor', 'Lumpia'] as $kategori): ?>
+    <?php foreach (['Somay Sapi', 'Lumpia', 'Pentol Goreng'] as $kategori): ?>
         <?php $items = $grouped[$kategori] ?? []; if (empty($items)) continue; ?>
         <section class="kategori">
             <h2><?= esc($kategori) ?></h2>

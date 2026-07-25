@@ -40,7 +40,7 @@
 
             <label>Kategori</label>
             <select name="kategori" required>
-                <?php foreach (['Siomay', 'Batagor', 'Lumpia'] as $k): ?>
+                <?php foreach (['Somay Sapi', 'Lumpia', 'Pentol Goreng'] as $k): ?>
                     <option value="<?= $k ?>" <?= old('kategori', $produk['kategori'] ?? '') === $k ? 'selected' : '' ?>><?= $k ?></option>
                 <?php endforeach; ?>
             </select>
