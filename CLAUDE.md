@@ -13,6 +13,16 @@ Sistem ini dibangun untuk mendigitalisasi alur pemesanan dan pembayaran (QRIS) *
 
 Ini proyek lomba **solo** (bukan tim), diselenggarakan oleh BRIDA dan Bank Indonesia. Fokus penilaian utama: modul transaksi & laporan.
 
+### 1.1 Menu & Harga (Final)
+
+| Produk | Kategori | Harga | Varian |
+|---|---|---|---|
+| Somay Sapi | Somay Sapi | Rp1.000 / pcs | — |
+| Lumpia | Lumpia | Rp2.000 / pcs | Frozen / Digoreng |
+| Pentol Goreng | Pentol Goreng | Rp1.000 / pcs | — |
+
+**Catatan**: ini menggantikan daftar kategori awal (Siomay/Batagor/Lumpia) yang ada di draft PRD sebelumnya — Batagor dihapus, digantikan Pentol Goreng, dan nama "Siomay" diubah jadi "Somay Sapi" untuk konsistensi dengan menu asli UMKM.
+
 ---
 
 ## 2. Dua Role & Kenapa Desainnya Begitu
@@ -42,7 +52,7 @@ Scan QR di gerobak → pilih salah satu:
 
 **Berlaku pre-order untuk kedua metode (Ambil Sendiri maupun Diantar) — sistem TIDAK menerima pesanan untuk hari yang sama.**
 
-1. **Etalase**: Siomay, Batagor, Lumpia (varian Frozen/Digoreng khusus Lumpia). Produk nonaktif tampil abu-abu, tidak bisa dipilih.
+1. **Etalase**: Somay Sapi, Lumpia, Pentol Goreng (varian Frozen/Digoreng khusus Lumpia). Produk nonaktif tampil abu-abu, tidak bisa dipilih.
 2. Kontrol jumlah (+/-) per produk, bisa lintas kategori dalam satu transaksi.
 3. **Kolom catatan** untuk permintaan rasa saja — instruksi eksplisit bahwa kolom ini BUKAN untuk alamat.
 4. **Validasi minimum Rp100.000** — tombol lanjut nonaktif + peringatan jika belum tercapai.
@@ -105,7 +115,7 @@ Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak bole
 1. Registrasi (setup awal, sekali saja): nama toko, username, password, nomor HP.
 2. Login: username + password + opsi "tetap masuk".
 3. Password di-hash, rate-limit percobaan login.
-4. Reset password: masih terbuka — lihat §8.
+4. **Reset password**: tidak ada mekanisme di aplikasi — lihat §8.2 (skip, fallback manual via database).
 
 ---
 
@@ -124,8 +134,8 @@ Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak bole
 
 ## 8. Pertanyaan Terbuka — Perlu Keputusan Pengguna Sebelum Diimplementasikan
 
-1. ~~Definisi "grey out" etalase~~ — **SUDAH DIPUTUSKAN, lihat §8.1 di bawah.**
-2. **Mekanisme reset password admin**: tidak ada email institusional — perlu mekanisme alternatif (contoh: kombinasi keamanan sederhana / pertanyaan keamanan). Perlu diputuskan sebelum implementasi F11.
+1. ~~Definisi "grey out" etalase~~ — **SUDAH DIPUTUSKAN, lihat §8.1.**
+2. ~~Mekanisme reset password admin~~ — **SUDAH DIPUTUSKAN, lihat §8.2.**
 3. **Format demo ke panitia lomba**: apakah wajib live-online, atau video rekaman cadangan diterima jika ada kendala jaringan?
 
 ### 8.1 Keputusan — Definisi "Grey Out" Etalase (final)
@@ -144,6 +154,14 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 - Status aktif "final" produk yang ditampilkan ke pembeli = `status_aktif (dari DB) DAN dalam rentang jam_buka–jam_tutup (dihitung real-time di server)`.
 - Jangan cache status ini terlalu lama di sisi klien — minimal refresh saat halaman etalase dimuat ulang, supaya produk otomatis abu-abu begitu lewat jam tutup tanpa perlu aksi admin.
 - Kalau `jam_buka`/`jam_tutup` belum diisi admin (nilai NULL), anggap toko selalu buka (skip pengecekan jam) — supaya default behavior tidak tiba-tiba mengunci semua produk sebelum admin sempat isi Pengaturan.
+
+### 8.2 Keputusan — Reset Password Admin (final)
+
+**Skip untuk sekarang.** Tidak ada mekanisme reset password mandiri (tidak ada OTP, tidak ada email, tidak ada pertanyaan keamanan) — ini keputusan sadar untuk konteks lomba (bukan produk produksi jangka panjang, single-admin, risiko rendah).
+
+**Fallback kalau admin lupa password**: reset manual langsung lewat database (update `password_hash` via phpMyAdmin/query, developer/pemilik proyek yang melakukan). Tidak perlu dibuatkan UI atau endpoint untuk ini.
+
+**Implikasi untuk F11**: form registrasi & login admin **tidak perlu** ada link/tombol "Lupa password". Cukup username + password + submit.
 
 **Jika Claude Code menemui ambiguitas bisnis baru di luar yang tercantum di file ini — STOP dan tanya user dulu, jangan diasumsikan sendiri.**
 
@@ -164,7 +182,7 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 **produk**
 - id (PK)
 - nama (string)
-- kategori (string) — Siomay / Batagor / Lumpia
+- kategori (string) — Somay Sapi / Lumpia / Pentol Goreng
 - harga (decimal)
 - status_aktif (bool)
 
@@ -254,6 +272,8 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 ---
 
 ## 11. Urutan Pembangunan (untuk progres bertahap & mudah didemoin)
+
+> **Catatan reorder**: Registrasi & Login Admin (langkah 6 di bawah / F11) dimajukan untuk dikerjakan setelah CRUD Etalase Produk (langkah 2), supaya route `/admin/*` yang sudah dibangun segera terlindungi filter auth — tidak dibiarkan terbuka tanpa proteksi terlalu lama. Urutan langkah lain tidak berubah.
 
 1. Migration database (7 tabel di atas)
 2. Etalase produk + varian (CRUD admin, tampilan pembeli) — F3
