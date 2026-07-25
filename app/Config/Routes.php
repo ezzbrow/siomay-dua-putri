@@ -8,7 +8,17 @@ $routes->get('/', 'Home::index');
 $routes->get('etalase', 'Etalase::index');
 
 $routes->group('admin', static function ($routes): void {
-    $routes->group('produk', static function ($routes): void {
+    $routes->get('/', static fn () => redirect()->to('/admin/dashboard'));
+
+    $routes->get('register',     'Admin\\Auth::register');
+    $routes->post('register',    'Admin\\Auth::storeRegister');
+    $routes->get('login',        'Admin\\Auth::login');
+    $routes->post('login',       'Admin\\Auth::attemptLogin');
+    $routes->post('logout',      'Admin\\Auth::logout');
+
+    $routes->get('dashboard', 'Admin\\Dashboard::index', ['filter' => 'auth']);
+
+    $routes->group('produk', ['filter' => 'auth'], static function ($routes): void {
         $routes->get('/',                 'Admin\\ProdukAdmin::index');
         $routes->get('create',            'Admin\\ProdukAdmin::create');
         $routes->post('store',            'Admin\\ProdukAdmin::store');
