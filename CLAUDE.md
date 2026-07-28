@@ -23,16 +23,22 @@ Ini proyek lomba **solo** (bukan tim), diselenggarakan oleh BRIDA dan Bank Indon
 
 **Catatan**: ini menggantikan daftar kategori awal (Siomay/Batagor/Lumpia) yang ada di draft PRD sebelumnya — Batagor dihapus, digantikan Pentol Goreng, dan nama "Siomay" diubah jadi "Somay Sapi" untuk konsistensi dengan menu asli UMKM.
 
+### 1.2 Referensi Desain Visual
+
+Tim membuat proyek CodeIgniter 4 paralel bernama **somay-order-app** dengan desain visual yang rapi (Tailwind CSS + Material Symbols). HANYA **bagian visual/styling halaman etalase** dari proyek itu yang dipakai sebagai **referensi estetika** di proyek ini — struktur kode, skema database, dan logika bisnisnya **TIDAK** dipakai langsung, karena skema data proyek ini berbeda (ada kategori Somay Sapi, Lumpia, Pentol Goreng; ada logika grey-out etalase; konsep login pembeli divergen; dll).
+
+Aturan: pakai somay-order-app seperti moodboard — lihat tampilannya, tiru vibe dan komposisi warnanya, tapi **tulis ulang** semua kode dari awal mengikuti konvensi CLAUDE.md ini (§11, §13) dan skema database di §9.
+
 ---
 
 ## 2. Dua Role & Kenapa Desainnya Begitu
 
 | Role | Autentikasi | Titik akses | Alasan desain |
 |---|---|---|---|
-| **Pembeli** | Tanpa login (guest) | Scan QR publik di gerobak | Meniru pengalaman QR-order cepat ala Gacoan; tidak butuh identitas permanen |
+| **Pembeli** | **Wajib registrasi + login untuk Jalur B (Pesan Antar/Banyak)**. **Tanpa login untuk Jalur A (Bayar di Tempat/walk-in)**. Browsing etalase & kelola keranjang bebas tanpa login. | Scan QR publik di gerobak | Ketentuan lomba mengharuskan ada fitur registrasi & login (jadi kebutuhan administratif, bukan sekadar pelengkap). Tapi tetap menjaga barrier rendah untuk walk-in cash: pembeli yang cuma mau bayar di tempat tidak dipaksa bikin akun. Pola filter: **`cart/add` & `cart/view` TANPA filter, semua `checkout/*` PAKAI filter `customerAuth`** — keranjang boleh diakses publik, login baru diwajibkan pas mau submit pesanan. |
 | **Admin/Penjual** | Wajib registrasi + login | URL privat, shortcut "Add to Home Screen" di HP penjual | Data yang diakses (total QRIS, riwayat transaksi, nomor HP pelanggan) sensitif |
 
-**Keputusan final — JANGAN DIUBAH**: pembeli tetap tanpa login/registrasi. Ini bukan fitur yang kurang, ini **nilai jual inovasi** — disampaikan eksplisit ke juri sebagai keputusan desain sengaja, bukan celah terlewat.
+**Catatan**: keputusan awal "pembeli tanpa login" **DIBATALKAN** lewat revisi ini. Pola yang dipakai mengikuti proyek referensi tim (somay-order-app, lihat §1.2) — bedanya hanya di sini login diwajibkan untuk Jalur B, bukan untuk semua jalur.
 
 ---
 
@@ -56,11 +62,12 @@ Scan QR di gerobak → pilih salah satu:
 2. Kontrol jumlah (+/-) per produk, bisa lintas kategori dalam satu transaksi.
 3. **Kolom catatan** untuk permintaan rasa saja — instruksi eksplisit bahwa kolom ini BUKAN untuk alamat.
 4. **Validasi minimum Rp100.000** — tombol lanjut nonaktif + peringatan jika belum tercapai.
-5. **Pilih tanggal pesanan dibutuhkan** via kalender — hanya tanggal **setelah hari ini** yang bisa dipilih (H+1 minimal, tidak menerima pesanan untuk hari yang sama).
-6. Sistem menampilkan **ringkasan pesanan**: subtotal → pajak (opsional, default 10% jika admin aktifkan) → total, beserta tanggal kebutuhan yang dipilih — total inilah yang dikirim ke Midtrans untuk generate kode QRIS.
-7. Pilih metode penerimaan: **Ambil Sendiri** atau **Diantar**.
+5. **Wajib login/registrasi** — kalau pembeli belum login, redirect ke halaman login/daftar. **Isi keranjang harus tetap dipertahankan setelah login berhasil**, lalu kembali otomatis ke keranjang (lihat §2 — hanya checkout/* yang diproteksi filter `customerAuth`, cart/add & cart/view tetap bebas).
+6. **Pilih tanggal pesanan dibutuhkan** via kalender — hanya tanggal **setelah hari ini** yang bisa dipilih (H+1 minimal, tidak menerima pesanan untuk hari yang sama).
+7. Sistem menampilkan **ringkasan pesanan**: subtotal → pajak (opsional, default 10% jika admin aktifkan) → total, beserta tanggal kebutuhan yang dipilih — total inilah yang dikirim ke Midtrans untuk generate kode QRIS.
+8. Pilih metode penerimaan: **Ambil Sendiri** atau **Diantar**.
 
-**4.7.a Ambil Sendiri**
+**5.a Ambil Sendiri**
 1. Isi nama + nomor HP (nomor HP wajib).
 2. Tampilkan alamat & lokasi UMKM di peta.
 3. Lanjut ke halaman pembayaran QRIS.
@@ -68,7 +75,7 @@ Scan QR di gerobak → pilih salah satu:
 5. Tampilkan halaman bukti transaksi.
 6. Layar status "Menunggu pesanan Anda" + tombol WA otomatis: *"Jam berapa bisa saya ambil?"*
 
-**4.7.b Diantar**
+**5.b Diantar**
 1. Isi nama penerima, nomor HP, alamat lengkap, pilih lokasi via peta.
 2. Lanjut ke pembayaran QRIS.
 3. Setelah `lunas` → masuk dashboard admin (dengan tanggal kebutuhan tampil untuk perencanaan produksi).
@@ -78,6 +85,23 @@ Scan QR di gerobak → pilih salah satu:
 
 ### 3.4 Navigasi
 Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak boleh hilang** saat pembeli bolak-balik halaman.
+
+### 3.5 Riwayat Pesanan Pembeli (F20)
+
+Hanya untuk pembeli yang sudah login (Jalur B). Jalur A (Bayar di Tempat) tidak masuk sini — lihat catatan di §9.
+
+Tampil di keranjang/etalase link "Riwayat Pesanan Saya" (atau halaman setara) yang menampilkan daftar pesanan miliknya:
+
+| Field | Sumber |
+|---|---|
+| Nomor pesanan | `pesanan.kode_pesanan` |
+| Tanggal kebutuhan | `pesanan.tanggal_dibutuhkan` |
+| Status | `pesanan.status` (pending / lunas / gagal / kedaluwarsa) |
+| Total | `pesanan.total` (sudah termasuk pajak jika aktif) |
+
+Daftar diurutkan terbaru di atas, filter status opsional. Klik baris membuka detail pesanan (item, catatan, metode, struk) — bisa di-screenshot/unduh PDF sederhana seperti F9.
+
+**Catatan**: query selalu di-scope `WHERE pembeli_id = ?` (id dari session pembeli yang login) — jangan pernah leaked pesanan milik orang lain.
 
 ---
 
@@ -123,7 +147,7 @@ Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak bole
 
 - **Payment gateway**: Midtrans Sandbox (basis dev & demo). Duitku = cadangan. Kategori usaha: **UMI** (MDR 0%/0,3%).
 - **Pajak**: opsional, toggle admin — bukan wajib aktif.
-- **Pembeli tanpa login**: final, ini fitur/nilai jual, bukan kekurangan.
+- **Pembeli wajib registrasi + login untuk Jalur B (REVISI, membatalkan keputusan awal)**. Jalur A tetap tanpa login. Browsing etalase & kelola keranjang bebas tanpa login — login baru diwajibkan pas checkout (lihat §2 dan §3.3).
 - **Strategi jaringan demo**: aplikasi **di-deploy ke hosting publik SEBELUM hari demo** (bukan localhost). Hotspot HP aman dipakai sebagai koneksi klien karena webhook Midtrans tidak lewat jalur ini lagi. WiFi venue sebagai cadangan.
 - **API Maxim**: dikonfirmasi tersedia sandbox-nya — siap diimplementasikan, rujuk dokumentasi teknis persis (endpoint, auth, payload alamat) saat implementasi.
 - **Pre-order wajib**: sistem TIDAK menerima pesanan untuk hari yang sama, berlaku untuk kedua metode (Ambil Sendiri & Diantar). Pembeli wajib pilih tanggal kebutuhan (minimal H+1) via kalender sebelum memilih metode penerimaan. Tidak berlaku untuk jalur Bayar QRIS di Tempat (itu transaksi langsung/walk-in).
@@ -169,7 +193,7 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 
 ## 9. Skema Database (dari Class Diagram)
 
-7 tabel:
+8 tabel:
 
 **admin**
 - id (PK)
@@ -178,6 +202,15 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 - password_hash (string)
 - nomor_hp (string)
 - email (string, unique) — *ditambahkan di luar class diagram awal, untuk keperluan reset password §8*
+
+**pembeli**
+- id (PK)
+- nama (string)
+- email (string, unique)
+- password_hash (string)
+- nomor_hp (string, nullable)
+- created_at (datetime)
+- updated_at (datetime)
 
 **produk**
 - id (PK)
@@ -206,6 +239,7 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 - nama_pembeli (string)
 - nomor_hp (string)
 - metode (string) — bayar_di_tempat / ambil_sendiri / diantar
+- pembeli_id (FK → pembeli, nullable) — NULL untuk `bayar_di_tempat` (Jalur A, anonim), diisi untuk `ambil_sendiri` / `diantar` (Jalur B, hasil login)
 - alamat (string, nullable — hanya untuk metode diantar)
 - catatan (string, nullable)
 - tanggal_dibutuhkan (date, nullable) — *ditambahkan untuk pre-order, wajib diisi untuk metode ambil_sendiri & diantar (minimal H+1, tidak boleh hari yang sama); NULL untuk bayar_di_tempat karena jalur itu tidak pre-order*
@@ -235,21 +269,22 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 - Admin 1→* Produk (mengelola)
 - Admin 1→1 Pengaturan (mengatur)
 - Admin 1→* Pesanan (memantau)
+- Pembeli 1→* Pesanan (memesan) — hanya untuk metode `ambil_sendiri` & `diantar`; pesanan `bayar_di_tempat` tidak punya pembeli (NULL)
 - Produk 1→* VarianProduk (punya)
 - Pesanan 1→* ItemPesanan (berisi)
 - ItemPesanan *→1 Produk (mereferensi)
 - ItemPesanan *→0..1 VarianProduk (varian opsional)
 - Pesanan 1→1 Transaksi (menghasilkan)
 
-**Catatan implementasi**: jalur A (Bayar QRIS di tempat) tetap membuat baris `pesanan` + `transaksi` (agar konsisten masuk laporan omzet), tapi dengan `nama_pembeli`/`nomor_hp` bisa diisi placeholder anonim (mis. "Pembeli di Tempat") dan tidak tampil di riwayat pesanan berbasis pelanggan — hanya dihitung di rekap omzet harian.
+**Catatan implementasi**: jalur A (Bayar QRIS di tempat) tetap membuat baris `pesanan` + `transaksi` (agar konsisten masuk laporan omzet), dengan `pembeli_id = NULL` dan `nama_pembeli`/`nomor_hp` diisi placeholder anonim (mis. "Pembeli di Tempat") — tidak masuk ke riwayat pesanan berbasis pelanggan (lihat §3.5), hanya dihitung di rekap omzet harian. Jalur B (`ambil_sendiri` / `diantar`) wajib `pembeli_id` terisi dari session login.
 
 ---
 
-## 10. Fitur Lengkap (F1–F18)
+## 10. Fitur Lengkap (F1–F20)
 
 | # | Fitur | Role |
 |---|---|---|
-| F1 | Landing page via QR, tanpa login | Pembeli |
+| F1 | Landing page via QR (bebas akses, tanpa login untuk browsing & Jalur A) | Pembeli |
 | F2 | Bayar QRIS di tempat | Pembeli |
 | F3 | Etalase menu dinamis (aktif/nonaktif per produk) | Pembeli / Admin |
 | F4 | Keranjang lintas kategori + validasi minimum Rp100.000 | Pembeli |
@@ -268,6 +303,7 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 | F17 | Navigasi back persisten tanpa kehilangan data form | Pembeli |
 | F18 | Perhitungan pajak opsional (toggle + persentase diatur admin) | Pembeli (tampil jika aktif) / Admin (atur) |
 | F19 | Pemilihan tanggal pesanan dibutuhkan (kalender, hanya H+1 ke atas) — wajib untuk Ambil Sendiri & Diantar, tidak berlaku untuk Bayar di Tempat | Pembeli |
+| F20 | Registrasi & login pembeli (wajib untuk checkout Jalur B) + riwayat pesanan pembeli | Pembeli |
 
 ---
 
@@ -275,9 +311,10 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 
 > **Catatan reorder**: Registrasi & Login Admin (langkah 6 di bawah / F11) dimajukan untuk dikerjakan setelah CRUD Etalase Produk (langkah 2), supaya route `/admin/*` yang sudah dibangun segera terlindungi filter auth — tidak dibiarkan terbuka tanpa proteksi terlalu lama. Urutan langkah lain tidak berubah.
 
-1. Migration database (7 tabel di atas)
+1. Migration database (8 tabel — 7 asli + pembeli baru)
 2. Etalase produk + varian (CRUD admin, tampilan pembeli) — F3
 3. Keranjang + validasi minimum Rp100.000 + catatan — F4, F5, F6
+3.5. Registrasi & login pembeli + filter customerAuth (proteksi checkout, BUKAN proteksi etalase/keranjang) + riwayat pesanan pembeli — F20
 4. Alur checkout (pilih Ambil Sendiri/Diantar) tanpa payment dulu — F7
 5. Integrasi Midtrans Sandbox (generate QRIS, webhook, validasi nominal server-side, idempotensi) — F2, F8, F9
 6. Registrasi & login admin — F11
