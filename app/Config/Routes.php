@@ -3,7 +3,7 @@
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
-$routes->get('/', 'Home::index');
+$routes->get('/', 'Landing::index');
 
 $routes->get('etalase', 'Etalase::index');
 
@@ -22,8 +22,21 @@ $routes->post('logout',                'PembeliAuth::logout');
 $routes->get('akun/riwayat',           'PembeliAkun::riwayat', ['filter' => 'customerAuth']);
 
 $routes->group('checkout', ['filter' => 'customerAuth'], static function ($routes): void {
-    $routes->get('/',             'Checkout::index');
-    $routes->post('/',            'Checkout::store');
+    // Wizard 6 step (lihat CLAUDE.md §3.2 + §11.4). Step 1 (Etalase) di luar
+    // group ini; step 2 (Keranjang) pakai route /keranjang existing. Step 3+
+    // masing-masing halaman terpisah. cart tetap di session.
+    $routes->get('catatan',           'Checkout::catatan');
+    $routes->post('catatan',          'Checkout::saveCatatan');
+    $routes->get('tanggal',           'Checkout::tanggal');
+    $routes->post('tanggal',          'Checkout::saveTanggal');
+    $routes->get('metode',            'Checkout::metode');
+    $routes->post('metode',           'Checkout::saveMetode');
+    $routes->get('jemput',            'Checkout::jemput');
+    $routes->post('jemput',           'Checkout::saveJemput');
+    $routes->get('antar',             'Checkout::antar');
+    $routes->post('antar',            'Checkout::saveAntar');
+    $routes->get('pembayaran',        'Checkout::pembayaran');
+    // Sukses (halaman terakhir) tetap pakai pola existing
     $routes->get('sukses/(:segment)', 'Checkout::sukses/$1');
 });
 

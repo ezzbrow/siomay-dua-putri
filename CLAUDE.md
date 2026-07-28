@@ -379,8 +379,31 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 ## 12. Identitas Visual
 
 - Nama brand: **Siomay Dua Putri** (sejak 2018)
-- Palet warna: ungu muda `#C9A8E0` (latar utama), biru `#1D4ED8` (wordmark "Siomay"), merah `#DC2626` (wordmark "Dua Putri" & aksen), kuning `#FACC15`/`#F5B301` (aksen highlight)
+- Font: **Be Vietnam Pro** (Google Fonts, weight 400/600/700/800)
+- Ikon: **Material Symbols Outlined** (Google Fonts variable font)
+- Palet warna (design tokens):
+  | Token | Hex | Peran |
+  |---|---|---|
+  | `primary` | `#4C1D95` | Warna utama (tombol, wordmark, ikon aktif) |
+  | `primary-hover` | `#6D28D9` | Hover state tombol primary |
+  | `secondary` | `#712edd` | Aksen sekunder |
+  | `secondary-light` | `#8B5CF6` | Varian terang secondary |
+  | `secondary-fixed` | `#ebddff` | Background chip/badge lembut |
+  | `background` | `#fef7ff` | Latar halaman |
+  | `surface` | `#ffffff` | Latar card/komponen |
+  | `surface-variant` | `#f3ebf6` | Latar hover/alternatif |
+  | `on-surface` | `#1d1a22` | Teks utama |
+  | `on-surface-variant` | `#4a4452` | Teks sekunder |
+  | `outline-variant` | `#e7e0eb` | Border/garis pemisah |
+  | `accent` | `#e19760` | Aksen hangat (opsional, sparingly) |
+- Background halaman: gradient lembut `linear-gradient(135deg, #F8F6FF 0%, #F2ECFF 100%)`
+- Radius card: `20px`
+- Shadow card: `0 10px 30px rgba(76, 29, 149, 0.08)`, hover: `0 20px 40px rgba(76, 29, 149, 0.12)`
 - Logo: emblem bulat, ilustrasi keranjang steamer dengan dumpling (draft sudah ada, siap diekspor SVG/PNG saat implementasi)
+
+**Catatan**: ini menggantikan palet biru/merah/kuning versi sebelumnya dan
+gaya "Warm Artisan" di etalase — semua halaman sekarang mengikuti design
+tokens di atas.
 
 ---
 

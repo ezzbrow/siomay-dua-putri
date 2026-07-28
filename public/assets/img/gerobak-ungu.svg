@@ -1,0 +1,55 @@
+<svg viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="awningU" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#712edd"/>
+    </linearGradient>
+    <linearGradient id="cartBodyU" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4C1D95"/>
+      <stop offset="100%" stop-color="#340075"/>
+    </linearGradient>
+    <linearGradient id="potU" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6b5a4a"/>
+      <stop offset="100%" stop-color="#4a3c30"/>
+    </linearGradient>
+  </defs>
+
+  <ellipse cx="210" cy="298" rx="150" ry="14" fill="#000" opacity="0.08"/>
+
+  <circle cx="120" cy="268" r="26" fill="#3a2f26"/>
+  <circle cx="120" cy="268" r="10" fill="#fef7ff"/>
+  <circle cx="300" cy="268" r="26" fill="#3a2f26"/>
+  <circle cx="300" cy="268" r="10" fill="#fef7ff"/>
+
+  <rect x="70" y="180" width="280" height="100" rx="10" fill="url(#cartBodyU)"/>
+  <rect x="70" y="180" width="280" height="22" rx="10" fill="#fef7ff" opacity="0.12"/>
+
+  <rect x="95" y="215" width="230" height="46" rx="8" fill="#fef7ff"/>
+  <text x="210" y="235" font-family="Poppins, sans-serif" font-size="15" font-weight="700" fill="#4C1D95" text-anchor="middle">SIOMAY DUA PUTRI</text>
+  <text x="210" y="252" font-family="Poppins, sans-serif" font-size="9" fill="#8B5CF6" text-anchor="middle">SIOMAY &amp; BAKSO IKAN</text>
+
+  <rect x="90" y="80" width="10" height="105" fill="#5b21b6"/>
+  <rect x="320" y="80" width="10" height="105" fill="#5b21b6"/>
+
+  <path d="M75 90 L345 90 L365 70 L55 70 Z" fill="url(#awningU)"/>
+  <path d="M55 70 L75 90 L95 70 Z" fill="#ebddff"/>
+  <path d="M115 70 L135 90 L155 70 Z" fill="#ebddff"/>
+  <path d="M175 70 L195 90 L215 70 Z" fill="#ebddff"/>
+  <path d="M235 70 L255 90 L275 70 Z" fill="#ebddff"/>
+  <path d="M295 70 L315 90 L335 70 Z" fill="#ebddff"/>
+
+  <ellipse cx="210" cy="178" rx="45" ry="12" fill="#3a2f26"/>
+  <rect x="165" y="150" width="90" height="30" rx="4" fill="url(#potU)"/>
+  <ellipse cx="210" cy="150" rx="45" ry="10" fill="#7a6857"/>
+
+  <path d="M195 145 Q188 130 198 118 Q206 108 198 96" stroke="#ebddff" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <path d="M222 145 Q230 128 220 115 Q212 105 222 92" stroke="#ebddff" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.7"/>
+
+  <g>
+    <path d="M355 105 Q385 95 400 118 Q380 122 355 118 Z" fill="#5b21b6"/>
+    <circle cx="372" cy="128" r="14" fill="#e8b98a"/>
+    <path d="M352 148 Q372 138 392 148 L396 200 Q372 210 348 200 Z" fill="#340075"/>
+    <rect x="335" y="165" width="30" height="9" rx="4" fill="#e8b98a" transform="rotate(-15 335 165)"/>
+    <rect x="355" y="165" width="35" height="45" rx="6" fill="#fef7ff" opacity="0.9"/>
+  </g>
+</svg>
