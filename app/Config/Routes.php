@@ -7,6 +7,12 @@ $routes->get('/', 'Home::index');
 
 $routes->get('etalase', 'Etalase::index');
 
+$routes->get('keranjang',              'Keranjang::index');
+$routes->post('keranjang/tambah',      'Keranjang::tambah');
+$routes->post('keranjang/kurang',      'Keranjang::kurang');
+$routes->post('keranjang/hapus',       'Keranjang::hapus');
+$routes->post('keranjang/catatan',     'Keranjang::simpanCatatan');
+
 $routes->group('admin', static function ($routes): void {
     $routes->get('/', static fn () => redirect()->to('/admin/dashboard'));
 
