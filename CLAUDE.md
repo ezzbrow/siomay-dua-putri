@@ -425,3 +425,155 @@ tokens di atas.
 - **Local server**: XAMPP, path `A:\myrealxampp\htdocs\somayduaputri`
 - **Repo**: git baru, terpisah dari EcoPalu/GasKerja
 - **.gitignore**: standar CI4 (`writable/`, `.env`, `vendor/`)
+
+
+
+[TAMBAH — section baru, taruh di paling atas sebelum §1]
+markdown
+## 0. Catatan Meta (REVISI 29 Juli 2026)
+
+- **Styling/tampilan visual TIDAK dikerjakan di sesi Claude Code** — akan dirombak total oleh tim frontend terpisah. Fokus pengembangan lanjutan: **logic/backend saja**. Styling cukup minimal/fungsional asal jalan, jangan alokasikan waktu mempercantik UI.
+- §12 (Identitas Visual — token ungu) tetap dipertahankan sebagai referensi struktur, tapi non-prioritas untuk pengembangan lanjutan.
+- Fitur **"Pesan Maxim" (F16) di-SKIP/discope-out** dari pengembangan — bukan syarat penilaian lomba, butuh API key pihak ketiga tambahan. Jangan dikerjakan kecuali ada instruksi eksplisit membuka lagi.
+- Fitur **"TAMPILKAN QRIS"** (salah satu dari 3 opsi landing page) — definisi & alurnya BELUM final, masih open question. Lihat §8.
+[GANTI §1.1 Menu & Harga]
+markdown
+### 1.1 Menu & Harga (REVISI 29 Juli 2026 — final)
+
+> Menu lama (Somay Sapi, Lumpia, Pentol Goreng — 3 item flat) sudah tidak berlaku. Diganti 2 daftar terpisah berdasarkan channel pemesanan, karena harga & satuan berbeda antar channel meski nama produknya mirip.
+
+**Menu Pesan Antar (3 produk, harga HYBRID pcs/kg):**
+
+| Produk | Satuan & Harga | Catatan |
+|---|---|---|
+| Siomay Kukus | 1 kg = 100 pcs = Rp80.000 | Kelipatan bebas, minimal 0,5 kg |
+| Tahu Kukus | 1 kg = 100 pcs = Rp80.000 | Kelipatan bebas, minimal 0,5 kg |
+| Lumpia | Rp2.000 / pcs | Varian: Mentah / Masak (rename dari Frozen/Digoreng). TETAP per pcs, tidak ada opsi kg |
+
+Minimum order (subtotal gabungan, boleh campur kg + pcs): **Rp100.000**.
+Pentol Goreng: **dihapus total** dari Pesan Antar.
+
+**Menu Pesan Stand (14 produk, fix per pcs, row produk terpisah dari Pesan Antar meski nama mirip):**
+
+| # | Nama Produk | Kategori | Harga |
+|---|---|---|---|
+| 1 | Siomay Kukus (Stand) | Siomay | Rp1.000 |
+| 2 | Tahu Kukus Sayur | Tahu | Rp1.000 |
+| 3 | Siomay Keju | Siomay | Rp2.000 |
+| 4 | Siomay Isi Telur | Siomay | Rp2.000 |
+| 5 | Siomay Urat | Siomay | Rp2.000 |
+| 6 | Siomay Jumbo | Siomay | Rp6.000 |
+| 7 | Pentol Goreng (Stand) | Pentol Goreng | Rp1.000 |
+| 8 | Nugget Ayam | Snack | Rp1.000 |
+| 9 | Sosis | Snack | Rp1.000 |
+| 10 | Siomay Ikan Goreng | Siomay | Rp1.000 |
+| 11 | Batagor | Snack | Rp1.000 |
+| 12 | Lumpia Isi Ayam+Sayur | Lumpia | Rp2.000 |
+| 13 | Mie Gelas | Lainnya | Rp3.000 |
+| 14 | Es Jeruk Cup Kecil | Minuman | Rp2.000 |
+
+Tidak ada minimum order untuk Pesan Stand.
+
+**Kategori produk resmi (7, menggantikan 3 kategori lama):** Siomay, Tahu, Pentol Goreng, Lumpia, Snack, Minuman, Lainnya.
+
+*(Status implementasi: SELESAI — 18 produk sudah ter-insert di DB, kategori & view etalase sudah disesuaikan per commit `611b2d4`.)*
+[GANTI §2, baris tabel "Titik akses" Pembeli]
+markdown
+| **Pembeli** | Wajib registrasi + login untuk semua pemesanan (browsing tetap bebas tanpa login) | Landing page via QR → 3 opsi: **TAMPILKAN QRIS** (definisi belum final, lihat §8), **PESAN-ANTAR**, **Pesan Stand/Panggil ke Acara** — login diwajibkan begitu mau checkout di 2 opsi terakhir | Ketentuan lomba mewajibkan fitur regis & login; akun dipakai untuk riwayat pesanan (F20) |
+[GANTI §3.1 Alur Umum]
+markdown
+### 3.1 Alur Umum (REVISI 29 Juli 2026)
+
+Scan QR di gerobak → landing page dengan **3 opsi**:
+- **TAMPILKAN QRIS** — belum final, lihat §8 (open question)
+- **PESAN-ANTAR** (minimum Rp100.000) — checkout otomatis via QRIS, lihat §3.2 (tidak berubah dari revisi sebelumnya, KECUALI harga sekarang hybrid kg/pcs, lihat §1.1)
+- **Pesan Stand / Panggil ke Acara** — checkout otomatis dengan biaya stand tambahan, lihat §3.3 (REVISI TOTAL)
+[GANTI §3.3 total — Pesanan Acara/Kegiatan]
+markdown
+### 3.3 Pesan Stand / Panggil ke Acara (F21, REVISI TOTAL 29 Juli 2026)
+
+> **PENTING**: Ini menggantikan definisi F21 lama (custom nego tanpa bayar, status baru/dihubungi/deal/batal). F21 baru = **checkout otomatis dengan pembayaran QRIS**, mirip Pesan Antar tapi dengan data acara tambahan + biaya stand. Alasan revisi: kebutuhan bisnis untuk booking stand ke acara/hajatan dengan pembayaran di muka, bukan sekadar inquiry.
+
+**Alur (6 step):**
+
+| Step | Halaman | Isi |
+|---|---|---|
+| 1 | Tentang Stand Acara | Info promosi (foto gerobak, kategori acara: Pernikahan/Ulang Tahun/Arisan/Pengajian/Seminar/Grand Opening/dll) → tombol "Booking Sekarang" |
+| 2 | Form Data Acara | Nama Lengkap, No. WhatsApp, Jenis Acara (dropdown), Tanggal Acara, Lokasi Acara, Estimasi Jumlah Tamu, Catatan (opsional). **Wajib login sebelum step ini** — browsing step 1 tetap bebas |
+| 3 | Pilih Menu Stand | Etalase 14 item (§1.1) dengan foto asli, qty +/-, subtotal berjalan |
+| 4 | Ringkasan Booking | Rekap data acara + daftar menu + **Subtotal + Biaya Stand (dari `pengaturan.biaya_stand`, nominal fix diatur admin) = Total Pembayaran** |
+| 5 | Pembayaran QRIS | QRIS dari Midtrans Sandbox, countdown timer, tombol "Unduh QRIS" + tombol **"Saya Sudah Bayar"** |
+| 6 | Berhasil | Kode booking unik, status **"Menunggu Konfirmasi"**, tombol "Chat WhatsApp Penjual" |
+
+**Aturan status pembayaran (berlaku di KEDUA alur — Pesan Antar §3.2 & Pesan Stand ini):**
+
+Tombol "Saya Sudah Bayar" **TIDAK langsung set status `lunas`**. Alurnya:
+1. Klik tombol → server panggil `MidtransService::getStatus()` ke Midtrans (server-side, bukan trust klik doang)
+2. Kalau Midtrans jawab `settlement`/`capture` → set `lunas` langsung
+3. Kalau masih `pending` → set status `menunggu_konfirmasi`, admin bisa cek manual & konfirmasi
+
+Ini override sebagian dari keputusan lama §6.5 ("tidak pakai pola self-report") — sekarang dipakai sebagai **pengaman manual** karena proyek masih pakai Midtrans Sandbox (bukan produksi), bukan sebagai pengganti webhook. Sumber kebenaran utama tetap webhook Midtrans (§4) dengan signature verification.
+
+**Biaya Stand:** nominal fix, diatur admin lewat kolom `pengaturan.biaya_stand` (bukan hardcode).
+
+**Status booking:** `menunggu_pembayaran` → `menunggu_konfirmasi` → `lunas` / `gagal` / `kedaluwarsa` (selaras dengan `pesanan.status` reguler, BUKAN lagi `baru/dihubungi/deal/batal`).
+
+*(Status implementasi: skema DB sudah jadi — tabel `pesanan_acara` & `item_pesanan_acara`, migration `2026-07-29-000006/006a/007/008`. UI 6 halaman + controller BELUM dibangun.)*
+[TAMBAH baris baru di tabel §4, setelah baris "Idempotensi"]
+markdown
+| **Konfirmasi manual "Saya Sudah Bayar"** | Server panggil `getStatus()` ke Midtrans saat tombol diklik (bukan trust klik doang) — lihat detail alur di §3.3. Berlaku di Pesan Antar & Pesan Stand. |
+[GANTI §7 — tambahkan bullet baru di daftar keputusan final]
+markdown
+- **Menu hybrid kg/pcs** (REVISI 29 Juli 2026): Siomay Kukus & Tahu Kukus di Pesan Antar dijual per kg (Rp80.000/kg, kelipatan bebas min 0,5kg), Lumpia tetap per pcs. Menu Pesan Stand (14 item) semua fix per pcs, row produk terpisah dari Pesan Antar. Lihat §1.1.
+- **Pesan Stand (F21) direvisi total jadi checkout otomatis** (REVISI 29 Juli 2026), menggantikan versi custom-nego lama. Lihat §3.3.
+- **Tombol "Saya Sudah Bayar" dipakai** di kedua alur (Pesan Antar & Pesan Stand) sebagai pengaman manual selama masih Sandbox — bukan pengganti webhook. Lihat §3.3 & §4.
+- **Fitur "Pesan Maxim" (F16) di-skip/discope-out** — bukan syarat lomba, ditunda tanpa batas waktu tertentu.
+- **Fitur "TAMPILKAN QRIS"** — masih open question, definisi alur belum ditentukan. Lihat §8.
+- **Floating WhatsApp button (F23, baru)** — logo WA mengambang pojok kanan bawah di semua halaman, kontak ke `admin.nomor_hp`. Terpisah dari tombol WA otomatis F10/F15.
+[TAMBAH di §8 Pertanyaan Terbuka]
+markdown
+4. **Definisi & alur "TAMPILKAN QRIS"** — salah satu dari 3 opsi landing page, belum ada spesifikasi sama sekali. Perlu didiskusikan sebelum diimplementasikan.
+5. **Skema final tabel `pesanan_acara`** — apakah reuse struktur mirip `pesanan` reguler penuh, atau tetap tabel terpisah dengan kolom sendiri (sudah diimplementasikan sebagai tabel terpisah per migration 000006a — tandai sebagai keputusan yang sudah jalan, bukan lagi open question, tapi dicatat di sini untuk audit trail).
+[GANTI §9 — tambahan kolom di tabel produk, pengaturan, dan tabel baru]
+markdown
+**produk** (REVISI 29 Juli 2026 — kolom tambahan untuk skema hybrid & multi-channel)
+- ...kolom lama tetap...
+- satuan (enum: 'pcs' / 'kg')
+- step_qty (decimal) — kelipatan qty yang valid, mis. 0.5 untuk produk kg, 1 untuk pcs
+- min_qty (decimal) — qty minimum per item
+- tampil_di_pesan_antar (bool)
+- tampil_di_pesan_stand (bool)
+
+**pengaturan**
+- ...kolom lama tetap...
+- biaya_stand (decimal) — nominal fix biaya stand untuk Pesan Stand, diatur admin
+
+**pesanan_acara** (REVISI TOTAL 29 Juli 2026 — sekarang checkout otomatis, bukan custom-nego)
+- id (PK)
+- pembeli_id (FK → pembeli)
+- kode_booking (string, unique)
+- nama_pemesan, nomor_hp (string)
+- jenis_acara, nama_acara, tanggal_acara, lokasi_acara (sesuai form §3.3)
+- estimasi_porsi (int, nullable)
+- catatan (text, nullable)
+- subtotal, biaya_stand, total (decimal)
+- status_pembayaran (string) — menunggu_pembayaran / menunggu_konfirmasi / lunas / gagal / kedaluwarsa
+- created_at, updated_at (datetime)
+
+**item_pesanan_acara** (baru — mirror item_pesanan)
+- id (PK), pesanan_acara_id (FK), produk_id (FK), jumlah, harga_satuan, subtotal_item
+
+**transaksi** (REVISI — sekarang polymorphic, bisa untuk pesanan reguler ATAU pesanan acara)
+- ...kolom lama tetap...
+- pesanan_id (FK → pesanan, NULLABLE sekarang)
+- pesanan_acara_id (FK → pesanan_acara, nullable)
+- CHECK constraint: XOR — hanya salah satu dari pesanan_id/pesanan_acara_id yang boleh terisi
+
+**item_pesanan.jumlah**: tipe diubah dari INT jadi DECIMAL(8,2) — untuk support qty kg desimal (mis. 0.5, 1.5).
+
+*(Status implementasi: SELESAI, migration sudah jalan & di-push — commit `4e8a2dd`.)*
+[GANTI baris F16, F21 di §10, TAMBAH baris F23]
+markdown
+| ~~F16~~ | ~~Tombol "Pesan Maxim" dengan alamat otomatis terisi~~ — **DISKOP-OUT, lihat §0 & §7** | — |
+| F21 | Pemesanan Stand/Acara — checkout otomatis (form data acara + etalase 14 item + biaya stand + QRIS + konfirmasi manual) — **REVISI TOTAL, lihat §3.3** | Pembeli |
+| F23 | Floating WhatsApp button (pojok kanan bawah, semua halaman) — kontak admin.nomor_hp — **BA
