@@ -38,7 +38,7 @@ class CartService
         return $produkId . ':' . ($varianId ?? '0');
     }
 
-    public static function add(int $produkId, ?int $varianId, int $jumlah, ProdukModel $produkModel, VarianProdukModel $varianModel): array
+    public static function add(int $produkId, ?int $varianId, float $jumlah, ProdukModel $produkModel, VarianProdukModel $varianModel): array
     {
         $produk = $produkModel->find($produkId);
         if (! $produk) {
@@ -72,27 +72,27 @@ class CartService
             $varianId = null;
         }
 
-        $jumlah = max(1, (int) $jumlah);
+        $jumlah = max(0.01, (float) $jumlah);
         $key    = self::lineKey($produkId, $varianId ? (int) $varianId : null);
         $cart   = self::get();
         $cart[$key] = [
             'produk_id' => (int) $produkId,
             'varian_id' => $varianId ? (int) $varianId : null,
-            'jumlah'    => (int) (($cart[$key]['jumlah'] ?? 0)) + $jumlah,
+            'jumlah'    => (float) (($cart[$key]['jumlah'] ?? 0)) + $jumlah,
         ];
         session()->set(self::SESSION_KEY, $cart);
         return ['ok' => true, 'key' => $key];
     }
 
-    public static function decrement(int $produkId, ?int $varianId, int $jumlah = 1): void
+    public static function decrement(int $produkId, ?int $varianId, float $jumlah = 1.0): void
     {
         $key  = self::lineKey($produkId, $varianId);
         $cart = self::get();
         if (! isset($cart[$key])) {
             return;
         }
-        $cart[$key]['jumlah'] = max(0, (int) $cart[$key]['jumlah'] - max(1, (int) $jumlah));
-        if ($cart[$key]['jumlah'] <= 0) {
+        $cart[$key]['jumlah'] = max(0.0, (float) $cart[$key]['jumlah'] - max(0.01, (float) $jumlah));
+        if ($cart[$key]['jumlah'] <= 0.0001) {
             unset($cart[$key]);
         }
         session()->set(self::SESSION_KEY, $cart);
@@ -126,7 +126,7 @@ class CartService
                 }
             }
             $harga = (float) $produk['harga'];
-            $jumlah = (int) $line['jumlah'];
+            $jumlah = (float) $line['jumlah'];
             $subtotal = $harga * $jumlah;
             $total += $subtotal;
             $rows[] = [

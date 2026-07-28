@@ -15,14 +15,14 @@ class ProdukModel extends Model
 
     protected $validationRules = [
         'nama'        => 'required|max_length[255]',
-        'kategori'    => 'required|in_list[Somay Sapi,Lumpia,Pentol Goreng]',
+        'kategori'    => 'required|in_list[Siomay,Tahu,Pentol Goreng,Lumpia,Snack,Minuman,Lainnya]',
         'harga'       => 'required|decimal|greater_than_equal_to[0]',
         'status_aktif'=> 'required|in_list[0,1]',
     ];
 
     protected $validationMessages = [
         'kategori' => [
-            'in_list' => 'Kategori harus salah satu dari: Somay Sapi, Lumpia, Pentol Goreng.',
+            'in_list' => 'Kategori harus salah satu dari: Siomay, Tahu, Pentol Goreng, Lumpia, Snack, Minuman, Lainnya.',
         ],
     ];
 
@@ -47,7 +47,15 @@ class ProdukModel extends Model
     {
         $rows = $this->withVariants();
 
-        $grouped = ['Somay Sapi' => [], 'Lumpia' => [], 'Pentol Goreng' => []];
+        $grouped = [
+            'Siomay'       => [],
+            'Tahu'         => [],
+            'Pentol Goreng' => [],
+            'Lumpia'       => [],
+            'Snack'        => [],
+            'Minuman'      => [],
+            'Lainnya'      => [],
+        ];
         foreach ($rows as $r) {
             $key = $r['kategori'];
             if (! isset($grouped[$key])) {

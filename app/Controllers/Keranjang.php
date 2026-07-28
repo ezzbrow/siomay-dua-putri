@@ -45,7 +45,42 @@ class Keranjang extends BaseController
         $produkId = (int) $this->request->getPost('produk_id');
         $varianRaw = $this->request->getPost('varian_id');
         $varianId  = ($varianRaw === null || $varianRaw === '' || $varianRaw === '0') ? null : (int) $varianRaw;
-        $jumlah    = (int) $this->request->getPost('jumlah') ?: 1;
+        // qty bisa desimal (kg) atau integer (pcs) — pakai float, validasi per satuan
+        $jumlah = (float) $this->request->getPost('jumlah');
+        if ($jumlah <= 0) {
+            return redirect()->to('/etalase')->with('error', 'Jumlah harus lebih dari 0.')->withInput();
+        }
+
+        // Validasi per satuan: kg butuh step_qty & min_qty, pcs integer >= 1
+        $produkModel = new ProdukModel();
+        $produk = $produkModel->find($produkId);
+        if ($produk) {
+            $satuan   = (string) ($produk['satuan'] ?? 'pcs');
+            $stepQty  = (float) ($produk['step_qty'] ?? 1);
+            $minQty   = (float) ($produk['min_qty'] ?? 1);
+            if ($satuan === 'kg') {
+                if ($jumlah < $minQty) {
+                    return redirect()->to('/etalase')
+                        ->with('error', 'Jumlah minimum untuk ' . $produk['nama'] . ' adalah ' . rtrim(rtrim(number_format($minQty, 2), '0'), '.') . ' kg.')
+                        ->withInput();
+                }
+                // Kelipatan step_qty: toleransi float 0.0001
+                $sisa = fmod($jumlah, $stepQty);
+                if ($sisa > 0.0001 && abs($sisa - $stepQty) > 0.0001) {
+                    return redirect()->to('/etalase')
+                        ->with('error', 'Jumlah untuk ' . $produk['nama'] . ' harus kelipatan ' . rtrim(rtrim(number_format($stepQty, 2), '0'), '.') . ' kg.')
+                        ->withInput();
+                }
+            } else {
+                // pcs: integer >= 1
+                if ((int) $jumlah !== (int) round($jumlah) || (int) $jumlah < 1) {
+                    return redirect()->to('/etalase')
+                        ->with('error', 'Jumlah untuk ' . $produk['nama'] . ' harus bilangan bulat minimal 1.')
+                        ->withInput();
+                }
+                $jumlah = (int) $jumlah;
+            }
+        }
 
         $result = CartService::add(
             $produkId,
@@ -66,7 +101,10 @@ class Keranjang extends BaseController
         $produkId = (int) $this->request->getPost('produk_id');
         $varianRaw = $this->request->getPost('varian_id');
         $varianId  = ($varianRaw === null || $varianRaw === '' || $varianRaw === '0') ? null : (int) $varianRaw;
-        $jumlah    = (int) $this->request->getPost('jumlah') ?: 1;
+        $jumlah    = (float) $this->request->getPost('jumlah');
+        if ($jumlah <= 0) {
+            $jumlah = 1.0;
+        }
 
         CartService::decrement($produkId, $varianId, $jumlah);
         return redirect()->to('/keranjang')->with('message', 'Jumlah item dikurangi.');

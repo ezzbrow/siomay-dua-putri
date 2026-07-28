@@ -548,7 +548,7 @@
                             <?php endif; ?>
                         </div>
                         <div class="v">
-                            <?= (int) $row['jumlah'] ?> × Rp <?= number_format($row['harga'], 0, ',', '.') ?>
+                            <?= rtrim(rtrim(number_format((float) $row['jumlah'], 2), '0'), '.') ?> × Rp <?= number_format($row['harga'], 0, ',', '.') ?>
                             = Rp <?= number_format($row['subtotal'], 0, ',', '.') ?>
                         </div>
                     </div>
@@ -613,17 +613,26 @@
         <?php endif; ?>
     </div>
 
-    <?php foreach (['Somay Sapi', 'Lumpia', 'Pentol Goreng'] as $kategori): ?>
-        <?php $items = $grouped[$kategori] ?? []; if (empty($items)) continue; ?>
+    <?php
+        // Icon per kategori — otomatis render untuk semua 7 kategori resmi.
+        // Fallback 'restaurant' kalau ada kategori baru yang belum di-mapping.
+        $kategoriIcon = [
+            'Siomay'        => 'restaurant',
+            'Tahu'          => 'rice_bowl',
+            'Lumpia'        => 'nutrition',
+            'Pentol Goreng'  => 'cookie',
+            'Snack'         => 'fastfood',
+            'Minuman'       => 'local_drink',
+            'Lainnya'       => 'restaurant_menu',
+        ];
+        // Loop hanya kategori yang punya item aktif (skip array kosong)
+        foreach ($grouped as $kategori => $items):
+            if (empty($items)) continue;
+            $icon = $kategoriIcon[$kategori] ?? 'restaurant';
+    ?>
         <section class="kategori">
             <h2>
-                <?php if ($kategori === 'Somay Sapi'): ?>
-                    <span class="material-symbols-outlined" aria-hidden="true">restaurant</span>
-                <?php elseif ($kategori === 'Lumpia'): ?>
-                    <span class="material-symbols-outlined" aria-hidden="true">nutrition</span>
-                <?php else: ?>
-                    <span class="material-symbols-outlined" aria-hidden="true">cookie</span>
-                <?php endif; ?>
+                <span class="material-symbols-outlined" aria-hidden="true"><?= esc($icon) ?></span>
                 <?= esc($kategori) ?>
             </h2>
             <?php foreach ($items as $p):
@@ -657,7 +666,16 @@
                             <?php else: ?>
                                 <input type="hidden" name="varian_id" value="0">
                             <?php endif; ?>
-                            <input type="number" name="jumlah" value="1" min="1" max="999" required aria-label="Jumlah">
+                            <?php
+                                // Untuk produk kg, step sesuai step_qty (mis. 0.5) + min sesuai min_qty
+                                $qtyInputStep = ($p['satuan'] ?? 'pcs') === 'kg' ? (float) ($p['step_qty'] ?? 1) : 1;
+                                $qtyInputMin  = ($p['satuan'] ?? 'pcs') === 'kg' ? (float) ($p['min_qty'] ?? 1) : 1;
+                            ?>
+                            <input type="number" name="jumlah"
+                                   value="<?= esc(rtrim(rtrim(number_format($qtyInputMin, 2), '0'), '.')) ?>"
+                                   min="<?= esc(rtrim(rtrim(number_format($qtyInputMin, 2), '0'), '.')) ?>"
+                                   step="<?= esc(rtrim(rtrim(number_format($qtyInputStep, 2), '0'), '.')) ?>"
+                                   max="999" required aria-label="Jumlah">
                             <button class="btn" type="submit">
                                 <span class="material-symbols-outlined" aria-hidden="true">add</span>
                                 Tambah

@@ -285,7 +285,7 @@
                                 <span class="v">(varian: <?= esc($row['varian']['nama_varian']) ?>)</span>
                             <?php endif; ?>
                         </div>
-                        <div class="v"><?= (int) $row['jumlah'] ?> × Rp <?= number_format($row['harga'], 0, ',', '.') ?></div>
+                        <div class="v"><?= rtrim(rtrim(number_format((float) $row['jumlah'], 2), '0'), '.') ?> × Rp <?= number_format($row['harga'], 0, ',', '.') ?></div>
                     </div>
                     <div class="v">Rp <?= number_format($row['subtotal'], 0, ',', '.') ?></div>
                 </li>

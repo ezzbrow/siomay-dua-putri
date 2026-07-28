@@ -243,7 +243,7 @@
                             <span style="color:var(--ink-soft);"> (varian: <?= esc($it['nama_varian']) ?>)</span>
                         <?php endif; ?>
                     </div>
-                    <div><?= (int) $it['jumlah'] ?> × Rp <?= number_format($it['harga_satuan'], 0, ',', '.') ?></div>
+                    <div><?= rtrim(rtrim(number_format((float) $it['jumlah'], 2), '0'), '.') ?> × Rp <?= number_format($it['harga_satuan'], 0, ',', '.') ?></div>
                 </li>
             <?php endforeach; ?>
         </ul>
