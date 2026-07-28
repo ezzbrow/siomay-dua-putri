@@ -122,3 +122,10 @@ _modules/*
 
 /results/
 /phpunit.xml
+
+#-------------------------
+# AI Tooling Local Files
+#-------------------------
+# UI/UX Pro Max skills (installed via `npx uipro init`) — local tooling only,
+# tidak dibagikan via repo. Anggota tim bisa install sendiri bila perlu.
+.claude/skills/
