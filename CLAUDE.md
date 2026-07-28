@@ -309,7 +309,7 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 
 ## 11. Urutan Pembangunan (untuk progres bertahap & mudah didemoin)
 
-> **Catatan reorder**: Registrasi & Login Admin (langkah 6 di bawah / F11) dimajukan untuk dikerjakan setelah CRUD Etalase Produk (langkah 2), supaya route `/admin/*` yang sudah dibangun segera terlindungi filter auth — tidak dibiarkan terbuka tanpa proteksi terlalu lama. Urutan langkah lain tidak berubah.
+> **Catatan reorder**: (1) Registrasi & Login Admin (langkah 6 / F11) sudah DIKERJAKAN LEBIH DULU secara kronologis (sebelum langkah 3.5 ini ditulis), supaya route `/admin/*` segera terlindungi filter auth — status: SELESAI. (2) Registrasi & Login Pembeli (langkah 3.5 / F20) disisipkan sebelum Langkah 4 karena checkout Jalur B sekarang mewajibkan login. Nomor urut di daftar ini merepresentasikan urutan LOGIS/dependency, bukan urutan kronologis eksekusi — cek status masing-masing langkah di sini secara manual saat sesi baru dimulai.
 
 1. Migration database (8 tabel — 7 asli + pembeli baru)
 2. Etalase produk + varian (CRUD admin, tampilan pembeli) — F3
