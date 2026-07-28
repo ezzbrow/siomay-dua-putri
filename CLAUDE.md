@@ -23,59 +23,61 @@ Ini proyek lomba **solo** (bukan tim), diselenggarakan oleh BRIDA dan Bank Indon
 
 **Catatan**: ini menggantikan daftar kategori awal (Siomay/Batagor/Lumpia) yang ada di draft PRD sebelumnya — Batagor dihapus, digantikan Pentol Goreng, dan nama "Siomay" diubah jadi "Somay Sapi" untuk konsistensi dengan menu asli UMKM.
 
-### 1.2 Referensi Desain Visual
+### 1.2 Referensi Desain Visual (dari proyek frontend tim)
 
-Tim membuat proyek CodeIgniter 4 paralel bernama **somay-order-app** dengan desain visual yang rapi (Tailwind CSS + Material Symbols). HANYA **bagian visual/styling halaman etalase** dari proyek itu yang dipakai sebagai **referensi estetika** di proyek ini — struktur kode, skema database, dan logika bisnisnya **TIDAK** dipakai langsung, karena skema data proyek ini berbeda (ada kategori Somay Sapi, Lumpia, Pentol Goreng; ada logika grey-out etalase; konsep login pembeli divergen; dll).
-
-Aturan: pakai somay-order-app seperti moodboard — lihat tampilannya, tiru vibe dan komposisi warnanya, tapi **tulis ulang** semua kode dari awal mengikuti konvensi CLAUDE.md ini (§11, §13) dan skema database di §9.
+Tim membuat proyek CI4 paralel (`somay-order-app`) berisi desain visual (Tailwind CSS + Material Symbols icons, design token seperti `on-surface`/`primary`/`rounded-card`). **Hanya bagian visual/styling-nya yang dipakai sebagai referensi** untuk halaman **etalase produk** — struktur kode (controller/model/migration) proyek itu TIDAK dipakai langsung karena skema datanya beda dari §9. Styling diterapkan ulang manual ke view CI4 proyek ini, menyesuaikan data dari skema `produk`/`pesanan` sendiri.
 
 ---
 
 ## 2. Dua Role & Kenapa Desainnya Begitu
 
+> **⚠️ REVISI 28 Juli 2026 (v1)**: Keputusan awal "pembeli tanpa login" **DIBATALKAN**. Ketentuan lomba mengharuskan sistem punya fitur registrasi & login untuk pengguna.
+> **⚠️ REVISI 28 Juli 2026 (v2, lebih lanjut)**: Jalur A (Bayar di Tempat) **DIHAPUS TOTAL** (lihat §3) — jadi pengecualian "tidak perlu login untuk Jalur A" di v1 sudah tidak relevan lagi. **Semua pembeli wajib login**, tanpa kecuali.
+
 | Role | Autentikasi | Titik akses | Alasan desain |
 |---|---|---|---|
-| **Pembeli** | **Wajib registrasi + login untuk Jalur B (Pesan Antar/Banyak)**. **Tanpa login untuk Jalur A (Bayar di Tempat/walk-in)**. Browsing etalase & kelola keranjang bebas tanpa login. | Scan QR publik di gerobak | Ketentuan lomba mengharuskan ada fitur registrasi & login (jadi kebutuhan administratif, bukan sekadar pelengkap). Tapi tetap menjaga barrier rendah untuk walk-in cash: pembeli yang cuma mau bayar di tempat tidak dipaksa bikin akun. Pola filter: **`cart/add` & `cart/view` TANPA filter, semua `checkout/*` PAKAI filter `customerAuth`** — keranjang boleh diakses publik, login baru diwajibkan pas mau submit pesanan. |
+| **Pembeli** | **Wajib registrasi + login untuk semua pemesanan** (browsing etalase tetap bebas tanpa login, login baru diwajibkan pas checkout) | Scan QR publik di gerobak → diarahkan login/daftar dulu begitu mau checkout | Ketentuan lomba mewajibkan ada fitur regis & login pengguna; akun juga dipakai untuk riwayat pesanan pembeli (F20) |
 | **Admin/Penjual** | Wajib registrasi + login | URL privat, shortcut "Add to Home Screen" di HP penjual | Data yang diakses (total QRIS, riwayat transaksi, nomor HP pelanggan) sensitif |
 
-**Catatan**: keputusan awal "pembeli tanpa login" **DIBATALKAN** lewat revisi ini. Pola yang dipakai mengikuti proyek referensi tim (somay-order-app, lihat §1.2) — bedanya hanya di sini login diwajibkan untuk Jalur B, bukan untuk semua jalur.
+**Keputusan final (terbaru)**: pembeli **wajib** punya akun untuk memesan — tidak ada lagi jalur tanpa akun sejak Jalur A dihapus. Browsing menu/etalase tetap bebas tanpa login, tapi **login diwajibkan sebelum checkout** (submit pesanan, baik pesanan reguler §3.2 maupun pesanan acara §3.3) dan untuk mengakses riwayat pesanan sendiri.
 
 ---
 
 ## 3. Alur Lengkap
 
+> **⚠️ REVISI 28 Juli 2026**: Jalur A (Bayar QRIS di Tempat/dine-in) **DIHAPUS TOTAL**. Sekarang cuma ada dua jalur: **Pesan Antar/Banyak** (eks-Jalur B, sekarang satu-satunya jalur pemesanan produk reguler) dan **Pesanan Acara/Kegiatan** (jalur baru, custom nego). Konsekuensinya: **SEMUA pemesanan sekarang wajib login** — tidak ada lagi jalur tanpa akun.
+
 ### 3.1 Alur Umum
 Scan QR di gerobak → pilih salah satu:
-- **Bayar QRIS** (makan di tempat), atau
-- **Pesan Antar/Banyak** (minimum Rp100.000)
+- **Pesan Antar/Banyak** (minimum Rp100.000) — checkout otomatis via QRIS, lihat §3.2
+- **Pesanan Acara/Kegiatan** — form inquiry, admin follow-up manual via WA, lihat §3.3
 
-### 3.2 Jalur A — Bayar QRIS di Tempat
-1. Tampilkan gambar QRIS merchant, tombol unduh, instruksi bayar.
-2. Pembeli bayar via aplikasi apapun yang support QRIS.
-3. Transaksi **anonim** — tidak masuk riwayat pesanan berbasis pelanggan, tapi **wajib tercatat sebagai bagian dari total omzet harian** di laporan (dana tetap masuk ke rekening/merchant QRIS yang sama).
+~~Bayar QRIS (makan di tempat)~~ — **DIHAPUS**, lihat catatan revisi di atas.
 
-### 3.3 Jalur B — Pesan Antar/Pesanan Banyak
+### 3.2 Pesan Antar/Pesanan Banyak (eks-Jalur B)
 
 **Berlaku pre-order untuk kedua metode (Ambil Sendiri maupun Diantar) — sistem TIDAK menerima pesanan untuk hari yang sama.**
+
+**Wajib login untuk semua pemesanan** (lihat §2, REVISI) — browsing etalase & isi keranjang tetap bebas tanpa login, tapi begitu mau lanjut ke tahap checkout (setelah validasi minimum tercapai), sistem mewajibkan pembeli login/daftar dulu sebelum bisa lanjut ke pemilihan tanggal.
 
 1. **Etalase**: Somay Sapi, Lumpia, Pentol Goreng (varian Frozen/Digoreng khusus Lumpia). Produk nonaktif tampil abu-abu, tidak bisa dipilih.
 2. Kontrol jumlah (+/-) per produk, bisa lintas kategori dalam satu transaksi.
 3. **Kolom catatan** untuk permintaan rasa saja — instruksi eksplisit bahwa kolom ini BUKAN untuk alamat.
 4. **Validasi minimum Rp100.000** — tombol lanjut nonaktif + peringatan jika belum tercapai.
-5. **Wajib login/registrasi** — kalau pembeli belum login, redirect ke halaman login/daftar. **Isi keranjang harus tetap dipertahankan setelah login berhasil**, lalu kembali otomatis ke keranjang (lihat §2 — hanya checkout/* yang diproteksi filter `customerAuth`, cart/add & cart/view tetap bebas).
+5. **Wajib login/registrasi** — kalau pembeli belum login, redirect ke halaman login/daftar. Setelah berhasil, kembali otomatis ke keranjang (isi keranjang dipertahankan, jangan hilang).
 6. **Pilih tanggal pesanan dibutuhkan** via kalender — hanya tanggal **setelah hari ini** yang bisa dipilih (H+1 minimal, tidak menerima pesanan untuk hari yang sama).
 7. Sistem menampilkan **ringkasan pesanan**: subtotal → pajak (opsional, default 10% jika admin aktifkan) → total, beserta tanggal kebutuhan yang dipilih — total inilah yang dikirim ke Midtrans untuk generate kode QRIS.
 8. Pilih metode penerimaan: **Ambil Sendiri** atau **Diantar**.
 
-**5.a Ambil Sendiri**
-1. Isi nama + nomor HP (nomor HP wajib).
+**3.2.a Ambil Sendiri**
+1. Isi nama + nomor HP (nomor HP wajib) — bisa auto-fill dari data akun pembeli.
 2. Tampilkan alamat & lokasi UMKM di peta.
 3. Lanjut ke halaman pembayaran QRIS.
 4. Setelah status `lunas` → pesanan otomatis masuk dashboard admin (dengan tanggal kebutuhan tampil untuk perencanaan produksi).
 5. Tampilkan halaman bukti transaksi.
 6. Layar status "Menunggu pesanan Anda" + tombol WA otomatis: *"Jam berapa bisa saya ambil?"*
 
-**5.b Diantar**
+**3.2.b Diantar**
 1. Isi nama penerima, nomor HP, alamat lengkap, pilih lokasi via peta.
 2. Lanjut ke pembayaran QRIS.
 3. Setelah `lunas` → masuk dashboard admin (dengan tanggal kebutuhan tampil untuk perencanaan produksi).
@@ -83,25 +85,28 @@ Scan QR di gerobak → pilih salah satu:
 5. Tombol WA otomatis: *"Kapan pesanan saya diantarkan?"*
 6. Di sisi admin: tombol "Pesan Maxim" membuka Maxim dengan alamat pelanggan sudah terisi (sandbox API Maxim — dikonfirmasi tersedia, lihat §7).
 
+### 3.3 Pesanan Acara/Kegiatan (Jalur C, BARU — F21)
+
+Untuk pesanan skala besar/custom (mis. bawa stand ke acara/hajatan/festival) — **BUKAN checkout otomatis**, karena kuantitas & harga perlu dinego manual antara admin dan pemesan.
+
+**Referensi desain**: kompetitor "Siomay Leeloo" (siomayleeloo.com) punya landing page sejenis — banner foto makanan, judul ajakan ("siap meramaikan acara Anda"), daftar kategori acara dalam bentuk bullet list, tombol CTA merah "PESAN SEKARANG". Pola ini dipakai sebagai referensi visual/struktur untuk halaman F21, disesuaikan dengan identitas visual §12.
+
+1. Pembeli (wajib login, sama seperti §3.2) isi form:
+   - **Jenis acara** (dropdown/pilihan, bukan teks bebas) — kategori: Ulang Tahun, Pernikahan, Acara Perusahaan, Pembukaan Kantor/Toko, Arisan, Acara Keagamaan/Sosial, Acara Kedukaan, Lainnya (kalau pilih "Lainnya", muncul field teks bebas)
+   - Nama acara
+   - Tanggal acara
+   - Lokasi acara
+   - Estimasi jumlah porsi/tamu
+   - Catatan detail permintaan
+2. Submit form **TIDAK langsung checkout/bayar** — sistem simpan sebagai catatan permintaan (status awal: `baru`) dan generate pesan WA otomatis berisi ringkasan permintaan, lalu redirect pembeli ke WhatsApp admin (mirip pola tombol WA di F10/F15).
+3. Admin lihat daftar permintaan acara ini di dashboard (bagian dari F21, sisi admin) — bisa update status (`baru` → `dihubungi` → `deal` / `batal`) secara manual setelah nego selesai di luar sistem (lewat WA/telepon).
+4. Kalau deal, admin **tidak wajib** membuatkan record di tabel `pesanan`/`transaksi` standar (karena pembayaran mungkin di luar Midtrans, misal transfer manual/cash di lokasi acara) — cukup update status `pesanan_acara` jadi `deal`. Ini keputusan sadar untuk menyederhanakan, bukan celah — pesanan acara sifatnya custom/negosiasi, beda dari alur checkout produk reguler.
+
 ### 3.4 Navigasi
 Setiap halaman punya tombol Kembali & Lanjut; data yang sudah diisi **tidak boleh hilang** saat pembeli bolak-balik halaman.
 
 ### 3.5 Riwayat Pesanan Pembeli (F20)
-
-Hanya untuk pembeli yang sudah login (Jalur B). Jalur A (Bayar di Tempat) tidak masuk sini — lihat catatan di §9.
-
-Tampil di keranjang/etalase link "Riwayat Pesanan Saya" (atau halaman setara) yang menampilkan daftar pesanan miliknya:
-
-| Field | Sumber |
-|---|---|
-| Nomor pesanan | `pesanan.kode_pesanan` |
-| Tanggal kebutuhan | `pesanan.tanggal_dibutuhkan` |
-| Status | `pesanan.status` (pending / lunas / gagal / kedaluwarsa) |
-| Total | `pesanan.total` (sudah termasuk pajak jika aktif) |
-
-Daftar diurutkan terbaru di atas, filter status opsional. Klik baris membuka detail pesanan (item, catatan, metode, struk) — bisa di-screenshot/unduh PDF sederhana seperti F9.
-
-**Catatan**: query selalu di-scope `WHERE pembeli_id = ?` (id dari session pembeli yang login) — jangan pernah leaked pesanan milik orang lain.
+Pembeli yang sudah login bisa lihat riwayat pesanan miliknya sendiri (nomor pesanan, tanggal kebutuhan, status, total) — halaman sederhana, tidak perlu fitur canggih, cukup daftar & detail per pesanan. Cakupan: pesanan reguler (§3.2) saja, pesanan acara (§3.3) punya halaman terpisah kalau dibutuhkan (opsional, tidak prioritas).
 
 ---
 
@@ -121,16 +126,29 @@ Daftar diurutkan terbaru di atas, filter status opsional. Klik baris membuka det
 
 ---
 
-## 5. Modul Laporan Transaksi (prioritas penilaian tinggi)
+## 5. Modul Laporan Transaksi & Keuangan (prioritas penilaian tinggi)
 
 | Fitur | Detail |
 |---|---|
-| Ringkasan harian | Total omzet hari ini, jumlah transaksi, breakdown Bayar-di-Tempat vs Pesan Antar |
+| Ringkasan harian | Total omzet hari ini, jumlah transaksi |
 | Filter rentang tanggal | Hari ini / minggu ini / custom range |
-| Breakdown per metode | Bayar di Tempat, Ambil Sendiri, Diantar |
+| Breakdown per metode | Ambil Sendiri, Diantar (Bayar di Tempat DIHAPUS, lihat §3) |
 | Breakdown produk terlaris | Jumlah terjual per produk dalam periode dipilih |
 | Export laporan | PDF atau Excel/CSV |
 | Tampilan | Angka besar & jelas di atas dashboard — admin non-teknis (papa) |
+
+### 5.1 Pencatatan Keuangan / Pengeluaran (BARU, REVISI 28 Juli 2026 — F22)
+
+Ketentuan lomba mengharuskan ada pencatatan keuangan, bukan cuma laporan penjualan. Tambahan modul:
+
+| Fitur | Detail |
+|---|---|
+| CRUD pengeluaran | Admin catat pengeluaran manual: tanggal, kategori (bahan baku / operasional / lainnya), deskripsi, jumlah |
+| Laporan laba-rugi | Total pemasukan (dari transaksi `lunas`) **dikurangi** total pengeluaran pada periode yang sama = laba/rugi bersih |
+| Filter periode | Sama seperti laporan transaksi — hari ini / minggu ini / custom range |
+| Tampilan di dashboard | Ringkasan laba-rugi ditampilkan berdampingan dengan ringkasan omzet, supaya admin (papa) langsung lihat untung-rugi tanpa hitung manual |
+
+**Catatan implementasi**: ini modul sederhana (bukan sistem akuntansi lengkap) — cukup CRUD pengeluaran + kalkulasi pemasukan-pengeluaran, tidak perlu double-entry bookkeeping atau kategori pajak pengeluaran yang rumit.
 
 ---
 
@@ -147,7 +165,10 @@ Daftar diurutkan terbaru di atas, filter status opsional. Klik baris membuka det
 
 - **Payment gateway**: Midtrans Sandbox (basis dev & demo). Duitku = cadangan. Kategori usaha: **UMI** (MDR 0%/0,3%).
 - **Pajak**: opsional, toggle admin — bukan wajib aktif.
-- **Pembeli wajib registrasi + login untuk Jalur B (REVISI, membatalkan keputusan awal)**. Jalur A tetap tanpa login. Browsing etalase & kelola keranjang bebas tanpa login — login baru diwajibkan pas checkout (lihat §2 dan §3.3).
+- **Pembeli wajib registrasi + login untuk SEMUA pemesanan** (REVISI 28 Juli 2026, membatalkan keputusan awal "tanpa login"): mengikuti ketentuan lomba. Jalur A (Bayar di Tempat) sudah DIHAPUS total, jadi tidak ada lagi pengecualian. Lihat §2 & §3.
+- **Jalur A (Bayar di Tempat/dine-in) DIHAPUS** (REVISI 28 Juli 2026): sekarang hanya ada Pesan Antar/Banyak (§3.2) dan Pesanan Acara/Kegiatan (§3.3, baru).
+- **Pesanan Acara/Kegiatan** (REVISI 28 Juli 2026, F21): alur custom, BUKAN checkout otomatis — pembeli isi form, sistem generate link WA ke admin untuk nego harga manual. Tidak wajib buat record `pesanan`/`transaksi` standar kalau deal (cukup update status di `pesanan_acara`).
+- **Pencatatan keuangan/pengeluaran** (REVISI 28 Juli 2026, F22): modul baru di dashboard admin — CRUD pengeluaran + laporan laba-rugi (pemasukan dari transaksi lunas dikurangi pengeluaran), sesuai ketentuan lomba.
 - **Strategi jaringan demo**: aplikasi **di-deploy ke hosting publik SEBELUM hari demo** (bukan localhost). Hotspot HP aman dipakai sebagai koneksi klien karena webhook Midtrans tidak lewat jalur ini lagi. WiFi venue sebagai cadangan.
 - **API Maxim**: dikonfirmasi tersedia sandbox-nya — siap diimplementasikan, rujuk dokumentasi teknis persis (endpoint, auth, payload alamat) saat implementasi.
 - **Pre-order wajib**: sistem TIDAK menerima pesanan untuk hari yang sama, berlaku untuk kedua metode (Ambil Sendiri & Diantar). Pembeli wajib pilih tanggal kebutuhan (minimal H+1) via kalender sebelum memilih metode penerimaan. Tidak berlaku untuk jalur Bayar QRIS di Tempat (itu transaksi langsung/walk-in).
@@ -193,7 +214,7 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 
 ## 9. Skema Database (dari Class Diagram)
 
-8 tabel:
+**10 tabel** (7 tabel asli class diagram + `pembeli` + `pesanan_acara` + `pengeluaran`, semua tambahan dari revisi 28 Juli 2026):
 
 **admin**
 - id (PK)
@@ -203,7 +224,7 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 - nomor_hp (string)
 - email (string, unique) — *ditambahkan di luar class diagram awal, untuk keperluan reset password §8*
 
-**pembeli**
+**pembeli** *(tabel baru, mengikuti §2 & referensi schema `customers` dari desain frontend tim — dinamai ulang ke Bahasa Indonesia untuk konsistensi)*
 - id (PK)
 - nama (string)
 - email (string, unique)
@@ -235,14 +256,14 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 
 **pesanan**
 - id (PK)
+- pembeli_id (FK → pembeli) — *sejak Jalur A dihapus, WAJIB diisi (tidak nullable lagi) — semua pesanan sekarang terasosiasi ke akun pembeli*
 - kode_pesanan (string, unique)
 - nama_pembeli (string)
 - nomor_hp (string)
-- metode (string) — bayar_di_tempat / ambil_sendiri / diantar
-- pembeli_id (FK → pembeli, nullable) — NULL untuk `bayar_di_tempat` (Jalur A, anonim), diisi untuk `ambil_sendiri` / `diantar` (Jalur B, hasil login)
+- metode (string) — ambil_sendiri / diantar *(nilai `bayar_di_tempat` DIHAPUS dari enum, Jalur A sudah tidak ada)*
 - alamat (string, nullable — hanya untuk metode diantar)
 - catatan (string, nullable)
-- tanggal_dibutuhkan (date, nullable) — *ditambahkan untuk pre-order, wajib diisi untuk metode ambil_sendiri & diantar (minimal H+1, tidak boleh hari yang sama); NULL untuk bayar_di_tempat karena jalur itu tidak pre-order*
+- tanggal_dibutuhkan (date) — *wajib diisi untuk semua pesanan sekarang (minimal H+1, tidak boleh hari yang sama) — tidak nullable lagi karena tidak ada lagi jalur non-pre-order*
 - subtotal (decimal)
 - pajak (decimal)
 - total (decimal)
@@ -265,27 +286,50 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 - mdr_persen (decimal)
 - nominal_diterima (decimal)
 
+**pesanan_acara** *(tabel baru, F21 — untuk Jalur C §3.3, custom nego, TERPISAH dari `pesanan` karena alurnya beda: tidak checkout otomatis, tidak selalu berujung transaksi tercatat di sistem)*
+- id (PK)
+- pembeli_id (FK → pembeli) — pemesan wajib login, sama seperti pesanan reguler
+- jenis_acara (string) — Ulang Tahun / Pernikahan / Acara Perusahaan / Pembukaan Kantor-Toko / Arisan / Acara Keagamaan-Sosial / Acara Kedukaan / Lainnya *(referensi kategori dari kompetitor Siomay Leeloo, lihat §3.3)*
+- nama_acara (string)
+- tanggal_acara (date)
+- lokasi_acara (string)
+- estimasi_porsi (int, nullable)
+- catatan (text, nullable)
+- status (string) — baru / dihubungi / deal / batal
+- created_at (datetime)
+
+**pengeluaran** *(tabel baru, F22 — untuk modul pencatatan keuangan §5.1)*
+- id (PK)
+- tanggal (date)
+- kategori (string) — bahan_baku / operasional / lainnya
+- deskripsi (string)
+- jumlah (decimal)
+- created_at (datetime)
+
 **Relasi:**
 - Admin 1→* Produk (mengelola)
 - Admin 1→1 Pengaturan (mengatur)
 - Admin 1→* Pesanan (memantau)
-- Pembeli 1→* Pesanan (memesan) — hanya untuk metode `ambil_sendiri` & `diantar`; pesanan `bayar_di_tempat` tidak punya pembeli (NULL)
+- Admin 1→* PesananAcara (memantau) — *baru*
+- Admin 1→* Pengeluaran (mencatat) — *baru*
+- Pembeli 1→* Pesanan (memesan)
+- Pembeli 1→* PesananAcara (memesan) — *baru*
 - Produk 1→* VarianProduk (punya)
 - Pesanan 1→* ItemPesanan (berisi)
 - ItemPesanan *→1 Produk (mereferensi)
 - ItemPesanan *→0..1 VarianProduk (varian opsional)
 - Pesanan 1→1 Transaksi (menghasilkan)
 
-**Catatan implementasi**: jalur A (Bayar QRIS di tempat) tetap membuat baris `pesanan` + `transaksi` (agar konsisten masuk laporan omzet), dengan `pembeli_id = NULL` dan `nama_pembeli`/`nomor_hp` diisi placeholder anonim (mis. "Pembeli di Tempat") — tidak masuk ke riwayat pesanan berbasis pelanggan (lihat §3.5), hanya dihitung di rekap omzet harian. Jalur B (`ambil_sendiri` / `diantar`) wajib `pembeli_id` terisi dari session login.
+**Catatan implementasi**: ~~jalur A (Bayar QRIS di tempat)...~~ — CATATAN LAMA DIHAPUS, Jalur A sudah tidak ada lagi sejak revisi 28 Juli 2026. Semua baris `pesanan` sekarang selalu punya `pembeli_id` terisi.
 
 ---
 
-## 10. Fitur Lengkap (F1–F20)
+## 10. Fitur Lengkap
 
 | # | Fitur | Role |
 |---|---|---|
-| F1 | Landing page via QR (bebas akses, tanpa login untuk browsing & Jalur A) | Pembeli |
-| F2 | Bayar QRIS di tempat | Pembeli |
+| F1 | Landing page via QR (bebas akses, tanpa login untuk browsing) | Pembeli |
+| ~~F2~~ | ~~Bayar QRIS di tempat~~ — **DIHAPUS, Jalur A tidak ada lagi (REVISI 28 Juli 2026)** | — |
 | F3 | Etalase menu dinamis (aktif/nonaktif per produk) | Pembeli / Admin |
 | F4 | Keranjang lintas kategori + validasi minimum Rp100.000 | Pembeli |
 | F5 | Checkbox varian produk (Lumpia) | Pembeli |
@@ -302,26 +346,31 @@ Logikanya bersifat **OR**, bukan AND — kalau salah satu kondisi bikin produk h
 | F16 | Tombol "Pesan Maxim" dengan alamat otomatis terisi | Admin |
 | F17 | Navigasi back persisten tanpa kehilangan data form | Pembeli |
 | F18 | Perhitungan pajak opsional (toggle + persentase diatur admin) | Pembeli (tampil jika aktif) / Admin (atur) |
-| F19 | Pemilihan tanggal pesanan dibutuhkan (kalender, hanya H+1 ke atas) — wajib untuk Ambil Sendiri & Diantar, tidak berlaku untuk Bayar di Tempat | Pembeli |
-| F20 | Registrasi & login pembeli (wajib untuk checkout Jalur B) + riwayat pesanan pembeli | Pembeli |
+| F19 | Pemilihan tanggal pesanan dibutuhkan (kalender, hanya H+1 ke atas) — wajib untuk SEMUA pesanan sekarang | Pembeli |
+| F20 | Registrasi & login pembeli (wajib untuk checkout semua pesanan) + riwayat pesanan pembeli | Pembeli |
+| F21 | Pemesanan acara/kegiatan (form custom + kontak WA admin, bukan checkout otomatis) — **BARU** | Pembeli |
+| F22 | Pencatatan pengeluaran + laporan laba-rugi (dashboard admin) — **BARU** | Admin |
 
 ---
 
 ## 11. Urutan Pembangunan (untuk progres bertahap & mudah didemoin)
 
-> **Catatan reorder**: (1) Registrasi & Login Admin (langkah 6 / F11) sudah DIKERJAKAN LEBIH DULU secara kronologis (sebelum langkah 3.5 ini ditulis), supaya route `/admin/*` segera terlindungi filter auth — status: SELESAI. (2) Registrasi & Login Pembeli (langkah 3.5 / F20) disisipkan sebelum Langkah 4 karena checkout Jalur B sekarang mewajibkan login. Nomor urut di daftar ini merepresentasikan urutan LOGIS/dependency, bukan urutan kronologis eksekusi — cek status masing-masing langkah di sini secara manual saat sesi baru dimulai.
+> **Catatan reorder v1**: Registrasi & Login Admin (langkah 6 / F11) sudah DIKERJAKAN LEBIH DULU secara kronologis, supaya route `/admin/*` segera terlindungi filter auth — status: SELESAI. Registrasi & Login Pembeli (langkah 3.5 / F20) disisipkan sebelum Langkah 4 karena checkout sekarang mewajibkan login.
+> **Catatan reorder v2 (REVISI 28 Juli 2026)**: Jalur A dihapus (F2 dihapus dari langkah 5). Ditambahkan langkah baru: Pesanan Acara/Kegiatan (F21) dan Pencatatan Pengeluaran (F22) — keduanya independen dari alur checkout utama, jadi bisa dikerjakan kapan saja setelah dependency masing-masing selesai (F21 butuh login pembeli sudah ada; F22 butuh modul laporan §5 sudah ada). Nomor urut di daftar ini merepresentasikan urutan LOGIS/dependency, bukan urutan kronologis eksekusi — cek status masing-masing langkah secara manual saat sesi baru dimulai (`git log`, `git status`).
 
-1. Migration database (8 tabel — 7 asli + pembeli baru)
-2. Etalase produk + varian (CRUD admin, tampilan pembeli) — F3
+1. Migration database (10 tabel — 7 asli + `pembeli` + `pesanan_acara` + `pengeluaran`)
+2. Etalase produk + varian (CRUD admin, tampilan pembeli — styling mengikuti referensi §1.2) — F3
 3. Keranjang + validasi minimum Rp100.000 + catatan — F4, F5, F6
-3.5. Registrasi & login pembeli + filter customerAuth (proteksi checkout, BUKAN proteksi etalase/keranjang) + riwayat pesanan pembeli — F20
+3.5. Registrasi & login pembeli + filter `customerAuth` (proteksi checkout, bukan proteksi etalase/keranjang) + riwayat pesanan pembeli — F20
 4. Alur checkout (pilih Ambil Sendiri/Diantar) tanpa payment dulu — F7
-5. Integrasi Midtrans Sandbox (generate QRIS, webhook, validasi nominal server-side, idempotensi) — F2, F8, F9
-6. Registrasi & login admin — F11
+5. Integrasi Midtrans Sandbox (generate QRIS, webhook, validasi nominal server-side, idempotensi) — F8, F9 *(F2 dihapus, tidak ada lagi Jalur A)*
+6. Registrasi & login admin — F11 *(SELESAI, dikerjakan lebih dulu — lihat catatan reorder di atas)*
 7. Dashboard admin real-time + riwayat transaksi — F12, F13
 8. Tombol WA otomatis (pembeli→penjual, admin→pelanggan) — F10, F15
 9. Modul laporan + export PDF/Excel — F14
+9.5. **[BARU]** Pencatatan pengeluaran + laporan laba-rugi — F22 (dikerjakan setelah langkah 9, karena numpang di modul laporan yang sama)
 10. Integrasi tombol "Pesan Maxim" — F16
+10.5. **[BARU]** Pemesanan Acara/Kegiatan — F21 (form pembeli + link WA otomatis + daftar permintaan di dashboard admin; butuh login pembeli dari langkah 3.5 dan pola tombol WA dari langkah 8 sudah ada)
 11. Pengaturan pajak opsional — F18
 12. **Deploy ke hosting publik** — lakukan LEBIH AWAL (setelah langkah 5 selesai berfungsi lokal), jangan ditunda ke akhir, karena webhook Midtrans butuh URL publik untuk testing beneran.
 
