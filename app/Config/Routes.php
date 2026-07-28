@@ -13,6 +13,20 @@ $routes->post('keranjang/kurang',      'Keranjang::kurang');
 $routes->post('keranjang/hapus',       'Keranjang::hapus');
 $routes->post('keranjang/catatan',     'Keranjang::simpanCatatan');
 
+$routes->get('daftar',                 'PembeliAuth::register');
+$routes->post('daftar',                'PembeliAuth::storeRegister');
+$routes->get('login',                  'PembeliAuth::login');
+$routes->post('login',                 'PembeliAuth::attemptLogin');
+$routes->post('logout',                'PembeliAuth::logout');
+
+$routes->get('akun/riwayat',           'PembeliAkun::riwayat', ['filter' => 'customerAuth']);
+
+$routes->group('checkout', ['filter' => 'customerAuth'], static function ($routes): void {
+    $routes->get('/',             'Checkout::index');
+    $routes->post('/',            'Checkout::store');
+    $routes->get('sukses/(:segment)', 'Checkout::sukses/$1');
+});
+
 $routes->group('admin', static function ($routes): void {
     $routes->get('/', static fn () => redirect()->to('/admin/dashboard'));
 

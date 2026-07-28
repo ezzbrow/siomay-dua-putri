@@ -98,6 +98,87 @@
         header a.cart-link:active { transform: scale(0.97); }
         header a.cart-link svg { width: 18px; height: 18px; }
 
+        /* === Header auth area (login/daftar/nama+logout) === */
+        header .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        header .auth-link {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 7px 12px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: background var(--t-fast);
+            font-size: 0.9rem;
+        }
+        header .auth-link:hover { background: rgba(255, 255, 255, 0.16); }
+        header .auth-link.secondary {
+            background: var(--brand-kuning);
+            color: #1F1611;
+            border-color: transparent;
+        }
+        header .auth-link.secondary:hover { background: #EAB308; }
+        header .account-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 4px 4px 12px;
+            border-radius: var(--radius-pill);
+            background: rgba(255, 255, 255, 0.10);
+            font-size: 0.9rem;
+        }
+        header .account-chip .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--brand-kuning);
+            color: #1F1611;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+        }
+        header .account-chip .name {
+            color: #fff;
+            font-weight: 600;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        header .account-chip .riwayat-link {
+            color: var(--brand-kuning);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.10);
+            padding: 6px 10px;
+            border-radius: var(--radius-md);
+            transition: background var(--t-fast);
+        }
+        header .account-chip .riwayat-link:hover { background: rgba(255, 255, 255, 0.18); }
+        header .account-chip .logout-form { display: inline; margin: 0; }
+        header .account-chip button.logout {
+            color: #fff;
+            background: rgba(220, 38, 38, 0.85);
+            border: none;
+            padding: 6px 12px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: inherit;
+            transition: background var(--t-fast);
+        }
+        header .account-chip button.logout:hover { background: #B91C1C; }
+
         /* === Layout === */
         main {
             max-width: 960px;
@@ -381,6 +462,26 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>
         Keranjang
     </a>
+    <div class="header-right">
+        <?php if (session()->get('pembeli_id')): ?>
+            <?php
+                $pembeliNama  = (string) session()->get('pembeli_nama');
+                $pembeliInisial = strtoupper(mb_substr($pembeliNama, 0, 1, 'UTF-8'));
+            ?>
+            <span class="account-chip">
+                <span class="avatar" aria-hidden="true"><?= esc($pembeliInisial) ?></span>
+                <span class="name"><?= esc($pembeliNama) ?></span>
+                <a class="riwayat-link" href="<?= base_url('akun/riwayat') ?>">Riwayat</a>
+                <form method="post" action="<?= base_url('logout') ?>" class="logout-form">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="logout">Logout</button>
+                </form>
+            </span>
+        <?php else: ?>
+            <a class="auth-link" href="<?= base_url('login') ?>">Login</a>
+            <a class="auth-link secondary" href="<?= base_url('daftar') ?>">Daftar</a>
+        <?php endif; ?>
+    </div>
 </header>
 <main>
     <?php if (session()->getFlashdata('error')): ?>
