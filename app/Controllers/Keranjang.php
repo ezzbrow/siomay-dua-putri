@@ -16,7 +16,6 @@ class Keranjang extends BaseController
         $varianModel     = new VarianProdukModel();
         $pengaturanModel = new PengaturanModel();
 
-        $grouped = $produkModel->groupedByCategory();
         $pengaturan = $pengaturanModel->getSingleton();
         $now        = date('H:i:s');
         $avail      = \App\Helpers\ProductAvailability::resolve(
@@ -28,7 +27,6 @@ class Keranjang extends BaseController
         $cartView = CartService::hydrate($produkModel, $varianModel, $pengaturanModel);
 
         $data = [
-            'grouped'      => $grouped,
             'pengaturan'   => $pengaturan,
             'nowServerTime'=> $now,
             'tokoBuka'     => $avail['tokoBuka'],
@@ -37,7 +35,7 @@ class Keranjang extends BaseController
             'catatan'      => CartService::getCatatan(),
         ];
 
-        return view('etalase/index', $data);
+        return view('keranjang/index', $data);
     }
 
     public function tambah()

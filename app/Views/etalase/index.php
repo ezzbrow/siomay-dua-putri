@@ -530,88 +530,11 @@
         </div>
     <?php endif; ?>
 
-    <div class="cart-card">
-        <h2>
-            <span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span>
-            Keranjang
-        </h2>
-        <?php if (empty($cart['rows'])): ?>
-            <p class="cart-empty">Belum ada item. Tambahkan dari etalase di bawah.</p>
-        <?php else: ?>
-            <?php foreach ($cart['rows'] as $row): ?>
-                <div class="cart-line">
-                    <div class="info">
-                        <div class="nm">
-                            <?= esc($row['produk']['nama']) ?>
-                            <?php if (! empty($row['varian'])): ?>
-                                <span class="v">(varian: <?= esc($row['varian']['nama_varian']) ?>)</span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="v">
-                            <?= rtrim(rtrim(number_format((float) $row['jumlah'], 2), '0'), '.') ?> × Rp <?= number_format($row['harga'], 0, ',', '.') ?>
-                            = Rp <?= number_format($row['subtotal'], 0, ',', '.') ?>
-                        </div>
-                    </div>
-                    <div class="actions">
-                        <form method="post" action="<?= base_url('keranjang/kurang') ?>" style="margin:0;">
-                            <input type="hidden" name="produk_id" value="<?= (int) $row['produk']['id'] ?>">
-                            <input type="hidden" name="varian_id" value="<?= (int) ($row['varian']['id'] ?? 0) ?>">
-                            <input type="hidden" name="jumlah" value="1">
-                            <button class="btn secondary icon-only" type="submit" aria-label="Kurangi jumlah">
-                                <span class="material-symbols-outlined" aria-hidden="true">remove</span>
-                            </button>
-                        </form>
-                        <form method="post" action="<?= base_url('keranjang/hapus') ?>" style="margin:0;">
-                            <input type="hidden" name="produk_id" value="<?= (int) $row['produk']['id'] ?>">
-                            <input type="hidden" name="varian_id" value="<?= (int) ($row['varian']['id'] ?? 0) ?>">
-                            <button class="btn secondary icon-only" type="submit" onclick="return confirm('Hapus item ini?')" aria-label="Hapus item">
-                                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-
-            <div class="total-row">
-                <span>Total</span>
-                <span class="amount">Rp <?= number_format($cart['total'], 0, ',', '.') ?></span>
-            </div>
-
-            <?php if ($cart['canCheckout']): ?>
-                <div class="min-ok">
-                    <span class="material-symbols-outlined" aria-hidden="true">verified</span>
-                    <span>Minimum order terpenuhi. Silakan lanjut.</span>
-                </div>
-                <p style="margin-top:16px;">
-                    <a class="btn" href="#" onclick="alert('Lanjut ke Langkah 4 (checkout) — belum dibangun.'); return false;">
-                        Lanjut ke Checkout
-                        <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
-                    </a>
-                </p>
-            <?php else: ?>
-                <div class="min-warning">
-                    <span class="material-symbols-outlined" aria-hidden="true">warning</span>
-                    <span>Minimum order Rp <?= number_format($cart['minOrder'], 0, ',', '.') ?>. Kurang Rp <?= number_format($cart['kekurangan'], 0, ',', '.') ?> lagi.</span>
-                </div>
-                <p style="margin-top:16px;">
-                    <button class="btn" disabled>Lanjut ke Checkout</button>
-                </p>
-            <?php endif; ?>
-
-            <form method="post" action="<?= base_url('keranjang/catatan') ?>" style="margin-top:24px;">
-                <label for="catatan" style="font-weight:600; display:block; margin-bottom:8px;">Catatan (opsional, untuk permintaan rasa)</label>
-                <textarea id="catatan" name="catatan" rows="2" maxlength="500" placeholder="Contoh: extra saus, tidak pedas, bumbunya dipisah"><?= esc($catatan ?? '') ?></textarea>
-                <p class="helper">
-                    <strong>Penting:</strong> kolom ini hanya untuk permintaan rasa, <strong>BUKAN</strong> untuk alamat.
-                    Alamat pengiriman diisi di langkah berikutnya.
-                </p>
-                <button class="btn secondary" type="submit" style="margin-top:10px;">
-                    <span class="material-symbols-outlined" aria-hidden="true">save</span>
-                    Simpan Catatan
-                </button>
-            </form>
-        <?php endif; ?>
-    </div>
+    <?php if (! empty($cart['rows'])): ?>
+        <div class="cart-card">
+            <p>Ada <?= count($cart['rows']) ?> item di keranjang. <a href="<?= base_url('keranjang') ?>">Lihat keranjang</a></p>
+        </div>
+    <?php endif; ?>
 
     <?php
         // Icon per kategori — otomatis render untuk semua 7 kategori resmi.
@@ -687,5 +610,6 @@
         </section>
     <?php endforeach; ?>
 </main>
+<?= $this->include('partials/wa_float', ['waNumber' => $adminWa ?? null]) ?>
 </body>
 </html>
