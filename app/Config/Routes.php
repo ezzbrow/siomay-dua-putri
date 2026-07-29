@@ -36,9 +36,15 @@ $routes->group('checkout', ['filter' => 'customerAuth'], static function ($route
     $routes->get('antar',             'Checkout::antar');
     $routes->post('antar',            'Checkout::saveAntar');
     $routes->get('pembayaran',        'Checkout::pembayaran');
+    // Endpoint polling manual user "Saya Sudah Bayar"
+    $routes->get('konfirmasi-bayar/(:segment)', 'Checkout::konfirmasiBayar/$1');
     // Sukses (halaman terakhir) tetap pakai pola existing
     $routes->get('sukses/(:segment)', 'Checkout::sukses/$1');
 });
+
+// Webhook Midtrans — di luar group customerAuth (Midtrans tidak punya akun pembeli).
+// Akan exclude dari CSRF via 'csrf' => 'exclude' option jika diperlukan.
+$routes->post('webhook/midtrans', 'MidtransWebhook::index');
 
 $routes->group('admin', static function ($routes): void {
     $routes->get('/', static fn () => redirect()->to('/admin/dashboard'));
@@ -50,6 +56,11 @@ $routes->group('admin', static function ($routes): void {
     $routes->post('logout',      'Admin\\Auth::logout');
 
     $routes->get('dashboard', 'Admin\\Dashboard::index', ['filter' => 'auth']);
+
+    $routes->group('pengaturan', ['filter' => 'auth'], static function ($routes): void {
+        $routes->get('/',  'Admin\\Pengaturan::index');
+        $routes->post('save', 'Admin\\Pengaturan::save');
+    });
 
     $routes->group('produk', ['filter' => 'auth'], static function ($routes): void {
         $routes->get('/',                 'Admin\\ProdukAdmin::index');
