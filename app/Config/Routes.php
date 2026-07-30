@@ -52,6 +52,7 @@ $routes->group('admin', static function ($routes): void {
     $routes->post('logout',      'Admin\\Auth::logout');
 
     $routes->get('dashboard', 'Admin\\Dashboard::index', ['filter' => 'auth']);
+    $routes->post('dashboard/konfirmasi-lunas/(:num)', 'Admin\\Dashboard::konfirmasiLunas/$1', ['filter' => 'auth']);
 
     $routes->group('pengaturan', ['filter' => 'auth'], static function ($routes): void {
         $routes->get('/',  'Admin\\Pengaturan::index');
