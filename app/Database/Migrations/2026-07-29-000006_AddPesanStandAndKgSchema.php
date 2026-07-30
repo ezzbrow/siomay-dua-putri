@@ -20,27 +20,18 @@ use CodeIgniter\Database\Migration;
  * polymorphic dengan `WHERE pesanan_id = ? OR pesanan_acara_id = ?`.
  *
  * === CATATAN AUDIT UNTUK REVIEWER MIGRATION HISTORY ===
- * File ini TERCATAT di tabel `migrations` sebagai "berhasil", padahal `up()`
- * melakukan early-return tanpa ALTER apa pun. Ini BUKAN bug — itu disengaja.
+ * Riwayat lama di bagian ini (sebelum fix 30 Juli 2026) mengira urutan file
+ * "000006 lalu 000006a" itu jalan dan hanya soal idempotency. Ternyata akar
+ * masalahnya lebih dalam: nama file "000006a" tidak match regex versi CI4
+ * (lihat catatan di 2026-07-29-000005_CreatePesananAcaraTable.php), jadi
+ * file itu TIDAK PERNAH jalan sama sekali lewat `php spark migrate` — dan
+ * urutannya memang salah (migration ini butuh tabel pesanan_acara SUDAH ADA
+ * sebelum baris ALTER TABLE transaksi ADD CONSTRAINT ... FK di bawah).
  *
- * Kronologi:
- *   1. Pertama kali dijalankan (sebelum 000006a ditambahkan sebagai file):
- *      - produk & pengaturan di-ALTER → BERHASIL (committed)
- *      - pesanan_acara di-ALTER → GAGAL (tabel tidak ada)
- *      - transaksi & sisanya → TIDAK JALAN (migration dihentikan)
- *   2. File 000006a dibuat untuk CREATE pesanan_acara + alter transaksi
- *   3. Schema disinkronkan manual via raw SQL (Forge tidak reliable)
- *   4. Patch idempotency (columnExists guard) ditambahkan di file ini agar
- *      re-run `php spark migrate` aman (tidak duplicate column error)
- *   5. Re-run migrate: file ini early-return (columnExists=true → skip),
- *      000006a noop (tableExists=true → skip), 000007 + 000008 jalan normal
- *
- * Hasil: di migrations table, file ini tercatat sukses (batch 8) padahal
- * tidak ada ALTER yang dieksekusi. Ini EXPECTED — yang penting adalah
- * schema DB konsisten dengan apa yang dideklarasikan di file ini.
- *
- * Kalau di kemudian hari ada yang audit `php spark migrate:status` dan
- * melihat file ini di batch 8 tanpa ALTER history, itulah alasannya.
+ * Fix 30 Juli 2026: file pembuat tabel pesanan_acara di-rename jadi
+ * "000005" (jalan sebelum migration ini). Guard idempotency di bawah
+ * (columnExists check) tetap dipertahankan supaya aman di-re-run di
+ * database yang skemanya sudah pernah ditambal manual sebelumnya.
  */
 class AddPesanStandAndKgSchema extends Migration
 {

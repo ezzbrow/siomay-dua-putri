@@ -23,10 +23,14 @@ class CreatePesananAcaraTable extends Migration
 {
     public function up()
     {
-        // CATATAN: 000006a ini dijalankan setelah 000006 (per timestamp migration
-        // runner). Sebelumnya, raw SQL dipakai manual untuk CREATE TABLE karena
-        // CI4 Forge generate query yang berbeda. Sekarang schema sudah ada di
-        // DB. Skip kalau sudah ada (idempotency).
+        // CATATAN (fix 30 Juli 2026): file ini awalnya bernama "000006a" dan
+        // dimaksudkan jalan SETELAH 000006 — tapi format itu tidak dikenali
+        // regex MigrationRunner CI4 (hanya terima versi angka murni), jadi
+        // file ini tidak pernah benar-benar jalan lewat `php spark migrate`.
+        // Selain itu urutan itu memang salah: 000006 butuh tabel ini SUDAH ADA
+        // untuk bikin FK ke sini, jadi migration ini harus jalan DULUAN.
+        // Di-rename jadi "000005" supaya (a) match regex CI4, (b) jalan
+        // sebelum 000006. Guard idempotency di bawah tetap dipertahankan.
         if ($this->db->query("SHOW TABLES LIKE 'pesanan_acara'")->getNumRows() > 0) {
             return;
         }
