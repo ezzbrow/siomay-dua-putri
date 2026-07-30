@@ -81,3 +81,31 @@ $routes->group('admin', static function ($routes): void {
         $routes->post('(:num)/varian/(:num)/delete', 'Admin\\ProdukAdmin::deleteVarian/$1/$2');
     });
 });
+
+// =====================================================================
+// Pesan Stand / Booking Acara (F21)
+// =====================================================================
+$routes->group('pesan-stand', static function ($routes): void {
+    // Step 1: Tentang (bebas akses, tanpa filter)
+    $routes->get('/', 'PesanStand::tentang');
+
+    // Step 2: Form Data Acara (wajib login)
+    $routes->get('form', 'PesanStand::form', ['filter' => 'customerAuth']);
+    $routes->post('form', 'PesanStand::saveForm', ['filter' => 'customerAuth']);
+
+    // Step 3: Pilih Menu Stand
+    $routes->get('menu', 'PesanStand::menu', ['filter' => 'customerAuth']);
+    $routes->post('menu/tambah', 'PesanStand::tambahMenu', ['filter' => 'customerAuth']);
+    $routes->post('menu/kurang', 'PesanStand::kurangMenu', ['filter' => 'customerAuth']);
+
+    // Step 4: Ringkasan + trigger finalisasi
+    $routes->get('ringkasan', 'PesanStand::ringkasan', ['filter' => 'customerAuth']);
+    $routes->post('ringkasan', 'PesanStand::lanjutPembayaran', ['filter' => 'customerAuth']);
+
+    // Step 5: Pembayaran QRIS + konfirmasi "Saya Sudah Bayar"
+    $routes->get('pembayaran', 'PesanStand::pembayaran', ['filter' => 'customerAuth']);
+    $routes->post('konfirmasi-bayar/(:segment)', 'PesanStand::konfirmasiBayar/$1', ['filter' => 'customerAuth']);
+
+    // Step 6: Sukses
+    $routes->get('sukses/(:segment)', 'PesanStand::sukses/$1', ['filter' => 'customerAuth']);
+});
