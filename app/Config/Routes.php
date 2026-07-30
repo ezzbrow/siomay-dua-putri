@@ -42,10 +42,6 @@ $routes->group('checkout', ['filter' => 'customerAuth'], static function ($route
     $routes->get('sukses/(:segment)', 'Checkout::sukses/$1');
 });
 
-// Webhook Midtrans — di luar group customerAuth (Midtrans tidak punya akun pembeli).
-// Akan exclude dari CSRF via 'csrf' => 'exclude' option jika diperlukan.
-$routes->post('webhook/midtrans', 'MidtransWebhook::index');
-
 $routes->group('admin', static function ($routes): void {
     $routes->get('/', static fn () => redirect()->to('/admin/dashboard'));
 

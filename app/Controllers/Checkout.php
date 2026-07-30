@@ -8,7 +8,6 @@ use App\Models\PengaturanModel;
 use App\Models\ProdukModel;
 use App\Models\VarianProdukModel;
 use App\Services\CartService;
-use App\Services\MidtransService;
 
 class Checkout extends BaseController
 {
@@ -289,13 +288,15 @@ class Checkout extends BaseController
     }
 
     // ====================================================================
-    // STEP 6: PEMBAYARAN (generate QRIS via Midtrans + simpan midtrans_order_id)
+    // STEP 6: PEMBAYARAN (QRIS statis milik admin — Midtrans dihapus 30 Juli 2026)
     // ====================================================================
 
     /**
-     * Generate QRIS via MidtransService, simpan midtrans_order_id ke tabel
-     * transaksi. Validasi nominal PASTI dari DB (item_pesanan × harga di DB),
-     * BUKAN dari input klien — untuk cegah manipulasi nominal.
+     * Tampilkan QRIS statis (pengaturan.qris_image, diupload admin) untuk
+     * dibayar manual oleh pembeli. Validasi nominal tetap dihitung ulang dari
+     * item_pesanan × harga di DB (bukan trust input klien) supaya total yang
+     * ditampilkan tidak bisa dimanipulasi, meski tidak ada lagi API pihak
+     * ketiga yang memverifikasi nominalnya secara otomatis.
      */
     public function pembayaran()
     {
@@ -318,7 +319,7 @@ class Checkout extends BaseController
             return redirect()->to('/keranjang')->with('error', 'Pesanan tidak ditemukan.');
         }
 
-        // Validasi ulang: pesanan.status harus 'pending'
+        // Validasi ulang: pesanan.status harus 'pending' (belum dibayar)
         if ($pesanan['status'] !== 'pending') {
             return redirect()->to('/checkout/sukses/' . $kodePesanan)
                 ->with('error', 'Pesanan ini sudah diproses (status: ' . $pesanan['status'] . ').');
@@ -326,22 +327,13 @@ class Checkout extends BaseController
 
         // Hitung ulang subtotal dari item_pesanan × harga di DB (bukan trust total di row pesanan)
         $items = $db->table('item_pesanan ip')
-            ->select('ip.jumlah, ip.harga_satuan, ip.subtotal_item, p.nama AS produk_nama, vp.nama_varian')
-            ->join('produk p', 'p.id = ip.produk_id', 'left')
-            ->join('varian_produk vp', 'vp.id = ip.varian_id', 'left')
+            ->select('ip.subtotal_item')
             ->where('ip.pesanan_id', (int) $pesanan['id'])
             ->get()->getResultArray();
 
         $recalcSubtotal = 0.0;
-        $midtransItems  = [];
         foreach ($items as $it) {
             $recalcSubtotal += (float) $it['subtotal_item'];
-            $midtransItems[] = [
-                'id'       => (string) $it['produk_nama'],
-                'price'    => (int) round((float) $it['harga_satuan']),
-                'quantity' => (int) round((float) $it['jumlah']),
-                'name'     => $it['produk_nama'] . ($it['nama_varian'] ? ' (' . $it['nama_varian'] . ')' : ''),
-            ];
         }
 
         // Validasi: subtotal re-hitung harus sama dengan pesanan.subtotal
@@ -353,60 +345,46 @@ class Checkout extends BaseController
 
         $grossAmount = (int) round((float) $pesanan['total']);
 
-        // Idempotensi: kalau transaksi sudah ada untuk pesanan ini, pakai midtrans_order_id existing
+        $pengaturan = (new PengaturanModel())->getSingleton();
+
+        // Idempotensi: kalau transaksi sudah ada untuk pesanan ini, pakai kode transaksi existing
         $existingTrx = $db->table('transaksi')
             ->where('pesanan_id', (int) $pesanan['id'])
             ->get()->getRowArray();
 
-        $midtransOrderId = $existingTrx['midtrans_order_id'] ?? MidtransService::generateOrderId($kodePesanan);
+        // Kode transaksi lokal (dulu diisi midtrans_order_id dari API Midtrans).
+        // Kolom tetap dipakai sebagai identifier internal, tidak lagi berasal
+        // dari pihak ketiga.
+        $kodeTransaksi = $existingTrx['midtrans_order_id'] ?? ('QRIS-' . $kodePesanan);
 
-        // Panggil Midtrans
-        $customerDetails = [
-            'first_name' => (string) $pesanan['nama_pembeli'],
-            'phone'      => (string) $pesanan['nomor_hp'],
-        ];
-        $response = MidtransService::generateQris($midtransOrderId, $grossAmount, $midtransItems, $customerDetails);
-
-        if (! ($response['ok'] ?? false)) {
-            return redirect()->to('/checkout/sukses/' . $kodePesanan)
-                ->with('error', 'Gagal generate QRIS: ' . ($response['error'] ?? 'unknown error'));
-        }
-
-        $midtransData = $response['data'] ?? [];
-
-        // Simpan/update transaksi (idempoten — kalau existing, update)
         $trxData = [
-            'midtrans_order_id' => $midtransOrderId,
-            'status_pembayaran'  => $midtransData['transaction_status'] ?? 'pending',
-            'mdr_persen'         => 0.00, // kategori UMI, default 0%
-            'nominal_diterima'   => 0.00, // di-update oleh webhook saat settlement
+            'status_pembayaran' => 'menunggu_pembayaran',
         ];
         if ($existingTrx) {
             $db->table('transaksi')->where('id', (int) $existingTrx['id'])->update($trxData);
         } else {
-            $trxData['pesanan_id'] = (int) $pesanan['id'];
+            $trxData['midtrans_order_id'] = $kodeTransaksi;
+            $trxData['pesanan_id']        = (int) $pesanan['id'];
+            $trxData['mdr_persen']        = 0.00;
+            $trxData['nominal_diterima']  = 0.00;
             $db->table('transaksi')->insert($trxData);
         }
 
-        // Tampilkan halaman pembayaran dengan data QRIS
         return view('checkout/pembayaran', [
-            'pesanan'        => $pesanan,
-            'midtransData'   => $midtransData,
-            'midtransOrderId'=> $midtransOrderId,
-            'grossAmount'    => $grossAmount,
-            'expiryMinutes'  => 15,
+            'pesanan'       => $pesanan,
+            'qrisImage'     => $pengaturan['qris_image'] ?? null,
+            'kodeTransaksi' => $kodeTransaksi,
+            'grossAmount'   => $grossAmount,
         ]);
     }
 
     /**
-     * Tombol "Saya Sudah Bayar" di halaman pembayaran — polling manual ke
-     * Midtrans. BUKAN bukti pembayaran authoritative (itu webhook), tapi
-     * feedback cepan untuk user.
-     *
-     * Jika settlement/capture → update pesanan.status='lunas' + transaksi.
-     * Jika masih pending → set 'menunggu_konfirmasi' (user sudah klik tapi
-     *   Midtrans belum konfirmasi — bisa jadi delay settlement).
-     * Lainnya → set 'menunggu_konfirmasi' (default aman).
+     * Tombol "Saya Sudah Bayar" di halaman pembayaran. Karena QRIS sekarang
+     * statis (bukan lagi API Midtrans yang bisa dicek statusnya), sistem
+     * TIDAK BISA memverifikasi pembayaran otomatis — tombol ini hanya
+     * menandai pesanan sebagai 'menunggu_konfirmasi', lalu admin yang
+     * mengonfirmasi manual setelah cek mutasi/notifikasi QRIS di sisi
+     * penjual (lihat dashboard admin — tombol "Konfirmasi Lunas").
      */
     public function konfirmasiBayar(string $kode)
     {
@@ -432,41 +410,17 @@ class Checkout extends BaseController
                 ->with('error', 'Transaksi belum di-generate. Silakan buka halaman pembayaran dulu.');
         }
 
-        $response = MidtransService::getStatus($trx['midtrans_order_id']);
-        if (! ($response['ok'] ?? false)) {
+        if ($pesanan['status'] !== 'pending') {
             return redirect()->to('/checkout/sukses/' . $kode)
-                ->with('error', 'Gagal cek status: ' . ($response['error'] ?? 'unknown'));
+                ->with('message', 'Pesanan ini sudah diproses sebelumnya (status: ' . $pesanan['status'] . ').');
         }
-
-        $data = $response['data'] ?? [];
-        $trxStatus = (string) ($data['transaction_status'] ?? '');
-        $fraud     = (string) ($data['fraud_status'] ?? '');
-
-        // Mapping Midtrans status → status lokal
-        $isLunas = in_array($trxStatus, ['settlement', 'capture'], true)
-            && $fraud !== 'deny';
-
-        $newPesananStatus = $isLunas ? 'lunas' : 'menunggu_konfirmasi';
-        $newTrxStatus     = $isLunas ? 'lunas' : ($trxStatus ?: 'pending');
 
         $db->table('pesanan')->where('id', (int) $pesanan['id'])
-            ->update(['status' => $newPesananStatus]);
+            ->update(['status' => 'menunggu_konfirmasi']);
+        $db->table('transaksi')->where('id', (int) $trx['id'])
+            ->update(['status_pembayaran' => 'menunggu_konfirmasi']);
 
-        $trxUpdate = [
-            'status_pembayaran' => $newTrxStatus,
-        ];
-        if ($isLunas) {
-            // gross_amount dari Midtrans saat settlement (integer rupiah)
-            $gross = isset($data['gross_amount']) ? (int) $data['gross_amount'] : (int) $pesanan['total'];
-            $trxUpdate['nominal_diterima'] = $gross;
-            // MDR UMI: 0% untuk ≤500rb, 0.3% untuk >500rb (per PBI No. 23/6/PBI/2021 Pasal 52)
-            $trxUpdate['mdr_persen'] = $gross > 500000 ? 0.30 : 0.00;
-        }
-        $db->table('transaksi')->where('id', (int) $trx['id'])->update($trxUpdate);
-
-        $message = $isLunas
-            ? 'Pembayaran terverifikasi! Pesanan Anda sudah lunas.'
-            : 'Status Midtrans: ' . ($trxStatus ?: 'tidak diketahui') . '. Pembayaran akan dikonfirmasi setelah Midtrans mengirim notifikasi. Mohon tunggu.';
-        return redirect()->to('/checkout/sukses/' . $kode)->with('message', $message);
+        return redirect()->to('/checkout/sukses/' . $kode)
+            ->with('message', 'Konfirmasi diterima. Admin akan memverifikasi pembayaran Anda secara manual.');
     }
 }
