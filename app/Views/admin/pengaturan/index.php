@@ -33,6 +33,9 @@ $old = function ($k, $d = '') use ($p) { return old($k, $p[$k] ?? $d); };
         .flash-ok { background:#E6F6EC; color:var(--ok); }
         .flash-err { background:#FCE6E6; color:var(--err); }
         .err-item { font-size:0.85rem; color:var(--err); margin-top:2px; }
+        .field-hint { font-size:0.85rem; color:var(--on-surface-variant); margin:6px 0 0; }
+        .qris-preview { margin-bottom:10px; }
+        .qris-preview img { max-width:180px; border:1.5px solid var(--outline); border-radius:12px; display:block; }
         .btn-primary { display:inline-flex; align-items:center; justify-content:center; padding:11px 20px; background:var(--primary); color:#fff; border:none; border-radius:12px; font-weight:600; cursor:pointer; font-size:0.95rem; min-height:44px; }
         .btn-primary:hover { background:var(--primary-hover); color:#fff; }
         .back { margin-top:20px; }
@@ -48,7 +51,7 @@ $old = function ($k, $d = '') use ($p) { return old($k, $p[$k] ?? $d); };
     <?php if ($flashMsg): ?><div class="flash flash-ok"><?= esc($flashMsg) ?></div><?php endif; ?>
     <?php if ($flashErr): ?><div class="flash flash-err"><?= esc($flashErr) ?></div><?php endif; ?>
 
-    <form method="post" action="<?= base_url('admin/pengaturan/save') ?>" class="card">
+    <form method="post" action="<?= base_url('admin/pengaturan/save') ?>" enctype="multipart/form-data" class="card">
         <?= csrf_field() ?>
 
         <div class="field-row">
@@ -95,6 +98,20 @@ $old = function ($k, $d = '') use ($p) { return old($k, $p[$k] ?? $d); };
                 <input type="time" id="jam_tutup" name="jam_tutup"
                        value="<?= esc($old('jam_tutup')) ?>">
             </div>
+        </div>
+
+        <div class="field">
+            <label for="qris_image">Gambar QRIS Statis</label>
+            <?php if (! empty($p['qris_image'])): ?>
+                <div class="qris-preview">
+                    <img src="<?= base_url('uploads/qris/' . $p['qris_image']) ?>" alt="QRIS saat ini">
+                </div>
+            <?php endif; ?>
+            <input type="file" id="qris_image" name="qris_image" accept="image/png,image/jpeg">
+            <p class="field-hint">Format JPG/PNG, maksimal 2MB. Kosongkan kalau tidak ingin mengganti gambar yang sudah ada.</p>
+            <?php if (! empty($errors['qris_image'])): ?>
+                <p class="err-item"><?= esc($errors['qris_image']) ?></p>
+            <?php endif; ?>
         </div>
 
         <button class="btn-primary" type="submit">

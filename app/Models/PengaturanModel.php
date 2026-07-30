@@ -18,6 +18,8 @@ class PengaturanModel extends Model
         'alamat_umkm',
         'jam_buka',
         'jam_tutup',
+        'biaya_stand',
+        'qris_image',
     ];
 
     public function getSingleton(): array

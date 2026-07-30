@@ -40,6 +40,42 @@ class Pengaturan extends BaseController
             return redirect()->back()->withInput()->with('error', 'Biaya stand tidak boleh negatif.');
         }
 
+        // PENTING: JANGAN pakai "if_exist" di sini. Rule if_exist mengecek
+        // array_key_exists() di data GET/POST hasil getVar() - yang TIDAK
+        // pernah memuat data file upload ($_FILES terpisah dari $_POST).
+        // Field file jadi selalu "dianggap tidak ada" dan seluruh validasi
+        // di bawahnya (is_image, mime_in, ext_in) DISKIP TANPA DIJALANKAN -
+        // artinya file APAPUN (termasuk .php yang disamarkan jadi .png)
+        // lolos begitu saja ke folder public/uploads/qris/ yang bisa
+        // diakses langsung lewat URL. Rule file bawaan CI4 (max_size,
+        // is_image, dst) sudah otomatis return true kalau memang tidak ada
+        // file yang diupload (UPLOAD_ERR_NO_FILE) - jadi field ini tetap
+        // optional TANPA perlu if_exist.
+        $rules = [
+            'qris_image' => [
+                'label' => 'Gambar QRIS',
+                'rules' => 'max_size[qris_image,2048]|is_image[qris_image]|mime_in[qris_image,image/jpg,image/jpeg,image/png]|ext_in[qris_image,jpg,jpeg,png]',
+            ],
+        ];
+        if (! $this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $row = $this->pengaturan->first();
+        $qrisFilename = $row['qris_image'] ?? null;
+
+        $qrisFile = $this->request->getFile('qris_image');
+        if ($qrisFile && $qrisFile->isValid() && ! $qrisFile->hasMoved()) {
+            $newName = $qrisFile->getRandomName();
+            $qrisFile->move(FCPATH . 'uploads' . DIRECTORY_SEPARATOR . 'qris', $newName);
+
+            // Hapus file lama supaya folder upload tidak menumpuk file yatim
+            if ($qrisFilename && is_file(FCPATH . 'uploads/qris/' . $qrisFilename)) {
+                @unlink(FCPATH . 'uploads/qris/' . $qrisFilename);
+            }
+            $qrisFilename = $newName;
+        }
+
         $data = [
             'pajak_aktif'    => $pajakAktif,
             'pajak_persen'   => $pajakPersen,
@@ -48,9 +84,9 @@ class Pengaturan extends BaseController
             'alamat_umkm'    => $alamatUmkm,
             'jam_buka'       => $jamBuka !== '' ? $jamBuka : null,
             'jam_tutup'      => $jamTutup !== '' ? $jamTutup : null,
+            'qris_image'     => $qrisFilename,
         ];
 
-        $row = $this->pengaturan->first();
         if ($row) {
             $this->pengaturan->update($row['id'], $data);
         } else {
