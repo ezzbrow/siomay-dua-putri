@@ -518,17 +518,6 @@
         </div>
     <?php endif; ?>
 
-    <?php if ($tokoBuka): ?>
-        <div class="status-banner status-open">
-            <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
-            <span>Toko sedang buka (<?= esc(substr($nowServerTime, 0, 5)) ?>).</span>
-        </div>
-    <?php else: ?>
-        <div class="status-banner status-closed">
-            <span class="material-symbols-outlined" aria-hidden="true">do_not_disturb_on</span>
-            <span>Toko sedang tutup. <?= esc($alasanTutup) ?></span>
-        </div>
-    <?php endif; ?>
 
     <?php if (! empty($cart['rows'])): ?>
         <div class="cart-card">

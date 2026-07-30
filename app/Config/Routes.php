@@ -56,6 +56,14 @@ $routes->group('admin', static function ($routes): void {
     $routes->post('logout',      'Admin\\Auth::logout');
 
     $routes->get('dashboard', 'Admin\\Dashboard::index', ['filter' => 'auth']);
+    $routes->get('riwayat', 'Admin\Dashboard::riwayat', ['filter' => 'auth']);
+    $routes->get('laporan', 'Admin\Dashboard::laporan', ['filter' => 'auth']);
+    $routes->get('laporan/export', 'Admin\Dashboard::exportCsv', ['filter' => 'auth']);
+    $routes->get('laba-rugi', 'Admin\Dashboard::labaRugi', ['filter' => 'auth']);
+
+    $routes->get('pengeluaran', 'Admin\Pengeluaran::index', ['filter' => 'auth']);
+    $routes->post('pengeluaran/tambah', 'Admin\Pengeluaran::tambah', ['filter' => 'auth']);
+    $routes->get('pengeluaran/hapus/(:num)', 'Admin\Pengeluaran::hapus/$1', ['filter' => 'auth']);
 
     $routes->group('pengaturan', ['filter' => 'auth'], static function ($routes): void {
         $routes->get('/',  'Admin\\Pengaturan::index');

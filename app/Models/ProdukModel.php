@@ -30,7 +30,8 @@ class ProdukModel extends Model
     {
         $varianModel = new VarianProdukModel();
 
-        $produk = $this->orderBy('kategori', 'ASC')
+        $produk = $this->where('tampil_di_pesan_antar', 1)
+            ->orderBy('kategori', 'ASC')
             ->orderBy('nama', 'ASC')
             ->findAll();
 

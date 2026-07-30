@@ -105,18 +105,15 @@
                 <span class="amount">Rp <?= number_format($cart['total'], 0, ',', '.') ?></span>
             </div>
 
-            <form method="post" action="<?= base_url('keranjang/catatan') ?>" class="cart-catatan">
-                <label for="catatan">Catatan (opsional)</label>
+            <form method="post" action="<?= base_url('checkout/catatan') ?>" class="cart-lanjut-form">
+                <label for="catatan">Catatan (opsional, untuk permintaan rasa — BUKAN alamat)</label>
                 <textarea id="catatan" name="catatan" rows="2" maxlength="500" placeholder="cth: extra saus, bumbunya dipisah"><?= esc($catatan) ?></textarea>
-                <p class="helper">Hanya untuk permintaan rasa, BUKAN alamat.</p>
-                <button class="btn-secondary" type="submit">Simpan Catatan</button>
+                <button class="btn-primary" type="submit"
+                        <?= $cart['canCheckout'] ? '' : 'aria-disabled="true" disabled style="opacity:0.5;"' ?>>
+                    Lanjut ke Checkout
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
             </form>
-
-            <a class="btn-primary cart-lanjut" href="<?= base_url('checkout/catatan') ?>"
-               <?= $cart['canCheckout'] ? '' : 'aria-disabled="true" style="pointer-events:none;opacity:0.5;"' ?>>
-                Lanjut ke Checkout
-                <span class="material-symbols-outlined">arrow_forward</span>
-            </a>
         </div>
     <?php endif; ?>
 </main>
