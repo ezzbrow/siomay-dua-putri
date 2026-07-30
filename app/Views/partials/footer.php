@@ -53,17 +53,6 @@
         </div>
     </div>
 
-    <?php
-        $jamBukaFooter  = (string) ($pengaturan['jam_buka']  ?? '');
-        $jamTutupFooter = (string) ($pengaturan['jam_tutup'] ?? '');
-        $jamFooterText  = '';
-        if ($jamBukaFooter !== '' && $jamTutupFooter !== '') {
-            $jamFooterText = 'Buka setiap hari jam ' . substr($jamBukaFooter, 0, 5) . ' - ' . substr($jamTutupFooter, 0, 5) . '.';
-        }
-    ?>
-    <?php if ($jamFooterText !== ''): ?>
-        <p class="footer-jam"><?= esc($jamFooterText) ?></p>
-    <?php endif; ?>
     <div class="footer-bottom">
         <span>© <?= date('Y') ?> Siomay Dua Putri. Dibuat dengan sepenuh hati.</span>
         <a href="<?= base_url('admin/login') ?>" class="footer-admin-link">
@@ -73,13 +62,7 @@
     </div>
 </footer>
 
-<?php if ($jamFooterText !== ''): ?>
-    <p class="footer-jam"><?= esc($jamFooterText) ?></p>
-<?php endif; ?>
-
 <?= $this->include('partials/wa_float') ?>
-
-<div class="footer-bottom">
 
 <style>
     /* === Footer (Purple theme, konsisten dengan header etalase) === */
@@ -142,7 +125,6 @@
     }
     .footer-contact-line .material-symbols-outlined { font-size: 18px; }
     .footer-soon { color: var(--on-surface-variant); font-style: italic; opacity: 0.7; }
-    .footer-jam { color: var(--on-surface-variant); font-size: 0.85rem; margin: 6px 0 0; }
     .footer-bottom {
         max-width: 1024px;
         margin: 32px auto 0;

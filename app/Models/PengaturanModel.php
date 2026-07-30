@@ -16,8 +16,6 @@ class PengaturanModel extends Model
         'pajak_persen',
         'pajak_aktif',
         'alamat_umkm',
-        'jam_buka',
-        'jam_tutup',
         'biaya_stand',
         'qris_image',
     ];
@@ -32,8 +30,6 @@ class PengaturanModel extends Model
                 'pajak_persen'   => 10.00,
                 'pajak_aktif'    => 0,
                 'alamat_umkm'    => '',
-                'jam_buka'       => null,
-                'jam_tutup'      => null,
             ];
             $this->insert($row);
             $row = $this->orderBy('id', 'ASC')->first();

@@ -27,8 +27,6 @@ class Pengaturan extends BaseController
         $minimumOrder = (float) $this->request->getPost('minimum_order');
         $biayaStand   = (float) $this->request->getPost('biaya_stand');
         $alamatUmkm   = trim((string) $this->request->getPost('alamat_umkm'));
-        $jamBuka      = (string) $this->request->getPost('jam_buka');
-        $jamTutup     = (string) $this->request->getPost('jam_tutup');
 
         if ($pajakPersen < 0 || $pajakPersen > 100) {
             return redirect()->back()->withInput()->with('error', 'Persentase pajak harus 0-100.');
@@ -82,8 +80,6 @@ class Pengaturan extends BaseController
             'minimum_order'  => $minimumOrder,
             'biaya_stand'    => $biayaStand,
             'alamat_umkm'    => $alamatUmkm,
-            'jam_buka'       => $jamBuka !== '' ? $jamBuka : null,
-            'jam_tutup'      => $jamTutup !== '' ? $jamTutup : null,
             'qris_image'     => $qrisFilename,
         ];
 

@@ -204,7 +204,6 @@
         }
 
         /* === Banners / status === */
-        .status-banner,
         .flash {
             padding: 14px 18px;
             border-radius: var(--radius-md);
@@ -215,11 +214,8 @@
             font-weight: 500;
             border: 1px solid transparent;
         }
-        .status-open,
         .flash-ok { background: var(--ok-bg); color: var(--ok-fg); border-color: rgba(22, 101, 52, 0.18); }
-        .status-closed,
         .flash-err { background: var(--err-bg); color: var(--err-fg); border-color: rgba(153, 27, 27, 0.18); }
-        .status-banner .material-symbols-outlined,
         .flash .material-symbols-outlined { font-size: 22px; flex-shrink: 0; }
 
         /* === Cards === */
@@ -518,18 +514,6 @@
         </div>
     <?php endif; ?>
 
-    <?php if ($tokoBuka): ?>
-        <div class="status-banner status-open">
-            <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
-            <span>Toko sedang buka (<?= esc(substr($nowServerTime, 0, 5)) ?>).</span>
-        </div>
-    <?php else: ?>
-        <div class="status-banner status-closed">
-            <span class="material-symbols-outlined" aria-hidden="true">do_not_disturb_on</span>
-            <span>Toko sedang tutup. <?= esc($alasanTutup) ?></span>
-        </div>
-    <?php endif; ?>
-
     <?php if (! empty($cart['rows'])): ?>
         <div class="cart-card">
             <p>Ada <?= count($cart['rows']) ?> item di keranjang. <a href="<?= base_url('keranjang') ?>">Lihat keranjang</a></p>
@@ -559,7 +543,7 @@
                 <?= esc($kategori) ?>
             </h2>
             <?php foreach ($items as $p):
-                $tersedia = \App\Helpers\ProductAvailability::isProductTersedia($p, $tokoBuka);
+                $tersedia = (int) ($p['status_aktif'] ?? 0) === 1;
                 $kelas = $tersedia ? '' : 'tidak-tersedia';
                 $isLumpia = ($p['kategori'] ?? '') === 'Lumpia';
             ?>

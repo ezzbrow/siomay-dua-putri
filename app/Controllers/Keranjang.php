@@ -17,22 +17,12 @@ class Keranjang extends BaseController
         $pengaturanModel = new PengaturanModel();
 
         $pengaturan = $pengaturanModel->getSingleton();
-        $now        = date('H:i:s');
-        $avail      = \App\Helpers\ProductAvailability::resolve(
-            $pengaturan['jam_buka'] ?? null,
-            $pengaturan['jam_tutup'] ?? null,
-            $now
-        );
-
-        $cartView = CartService::hydrate($produkModel, $varianModel, $pengaturanModel);
+        $cartView   = CartService::hydrate($produkModel, $varianModel, $pengaturanModel);
 
         $data = [
-            'pengaturan'   => $pengaturan,
-            'nowServerTime'=> $now,
-            'tokoBuka'     => $avail['tokoBuka'],
-            'alasanTutup'  => $avail['alasan'],
-            'cart'         => $cartView,
-            'catatan'      => CartService::getCatatan(),
+            'pengaturan' => $pengaturan,
+            'cart'       => $cartView,
+            'catatan'    => CartService::getCatatan(),
         ];
 
         return view('keranjang/index', $data);

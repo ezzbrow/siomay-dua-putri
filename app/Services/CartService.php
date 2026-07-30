@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Helpers\ProductAvailability;
 use App\Models\PengaturanModel;
 use App\Models\ProdukModel;
 use App\Models\VarianProdukModel;
@@ -45,17 +44,8 @@ class CartService
             return ['ok' => false, 'error' => 'Produk tidak ditemukan.'];
         }
 
-        $pengaturan = (new PengaturanModel())->getSingleton();
-        $now        = date('H:i:s');
-        $avail      = ProductAvailability::resolve(
-            $pengaturan['jam_buka'] ?? null,
-            $pengaturan['jam_tutup'] ?? null,
-            $now
-        );
-        $tersedia  = ProductAvailability::isProductTersedia($produk, $avail['tokoBuka']);
-        if (! $tersedia) {
-            $alasan = ! empty($avail['alasan']) ? ' ' . $avail['alasan'] : '';
-            return ['ok' => false, 'error' => 'Produk "' . $produk['nama'] . '" sedang tidak tersedia.' . $alasan];
+        if ((int) ($produk['status_aktif'] ?? 0) !== 1) {
+            return ['ok' => false, 'error' => 'Produk "' . $produk['nama'] . '" sedang tidak tersedia.'];
         }
 
         $isLumpia = ($produk['kategori'] ?? '') === 'Lumpia';

@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Helpers\ProductAvailability;
 use App\Models\PengaturanModel;
 use App\Models\ProdukModel;
 use App\Models\VarianProdukModel;
@@ -16,7 +15,7 @@ class Checkout extends BaseController
      * - wajib login (filter customerAuth sudah handle)
      * - cart tidak boleh kosong
      * - cart harus memenuhi minimum order
-     * - produk di cart harus masih tersedia (status_aktif + jam buka)
+     * - produk di cart harus masih tersedia (status_aktif)
      *
      * Return null jika OK, atau Response redirect (jika ada masalah) — supaya caller return.
      */
@@ -37,29 +36,18 @@ class Checkout extends BaseController
             return redirect()->to('/keranjang')
                 ->with('error', 'Keranjang kosong atau minimum order tidak terpenuhi.');
         }
-        // Re-validasi ketersediaan (status_aktif + jam buka) — TODO fix yang sudah
+        // Re-validasi ketersediaan (status_aktif) — TODO fix yang sudah
         // diterapkan di store() lama, dipindah ke sini agar konsisten untuk semua step.
-        $pengaturan = $pengaturanModel->getSingleton();
-        $now = date('H:i:s');
-        $avail = ProductAvailability::resolve(
-            $pengaturan['jam_buka'] ?? null,
-            $pengaturan['jam_tutup'] ?? null,
-            $now
-        );
-        $tokoBuka = $avail['tokoBuka'];
         $unavailable = [];
         foreach ($cartView['rows'] as $row) {
-            if (! ProductAvailability::isProductTersedia($row['produk'], $tokoBuka)) {
+            if ((int) ($row['produk']['status_aktif'] ?? 0) !== 1) {
                 $unavailable[] = $row['produk']['nama']
                     . (! empty($row['varian']) ? ' (varian: ' . $row['varian']['nama_varian'] . ')' : '');
             }
         }
         if (! empty($unavailable)) {
-            $reason = $tokoBuka
-                ? 'Produk berikut sudah tidak aktif dan tidak bisa dipesan: '
-                : 'Toko sedang tutup (' . ($avail['alasan'] ?? 'di luar jam operasional') . '). Produk: ';
             return redirect()->to('/keranjang')
-                ->with('error', $reason . implode(', ', $unavailable));
+                ->with('error', 'Produk berikut sudah tidak aktif dan tidak bisa dipesan: ' . implode(', ', $unavailable));
         }
         return $cartView;
     }

@@ -23,7 +23,7 @@ $old = function ($k, $d = '') use ($p) { return old($k, $p[$k] ?? $d); };
         .card { background:var(--surface); border:1px solid var(--outline); border-radius:20px; padding:24px; box-shadow:0 10px 30px rgba(76,29,149,0.08); }
         .field { margin-bottom:16px; }
         .field label { display:block; font-weight:600; margin-bottom:6px; font-size:0.9rem; }
-        .field input[type="text"], .field input[type="number"], .field input[type="time"], .field textarea { width:100%; box-sizing:border-box; padding:10px 12px; border:1.5px solid var(--outline); border-radius:12px; font-family:inherit; min-height:44px; }
+        .field input[type="text"], .field input[type="number"], .field input[type="file"], .field textarea { width:100%; box-sizing:border-box; padding:10px 12px; border:1.5px solid var(--outline); border-radius:12px; font-family:inherit; min-height:44px; }
         .field textarea { resize:vertical; }
         .field-row { display:flex; gap:12px; }
         .field-row > * { flex:1; }
@@ -46,7 +46,7 @@ $old = function ($k, $d = '') use ($p) { return old($k, $p[$k] ?? $d); };
 <body>
 <div class="wrap">
     <h1>Pengaturan</h1>
-    <p class="lead">Konfigurasi minimum order, pajak, jam operasional, dan biaya stand untuk Pesan Stand (F21).</p>
+    <p class="lead">Konfigurasi minimum order, pajak, dan biaya stand untuk Pesan Stand (F21).</p>
 
     <?php if ($flashMsg): ?><div class="flash flash-ok"><?= esc($flashMsg) ?></div><?php endif; ?>
     <?php if ($flashErr): ?><div class="flash flash-err"><?= esc($flashErr) ?></div><?php endif; ?>
@@ -85,19 +85,6 @@ $old = function ($k, $d = '') use ($p) { return old($k, $p[$k] ?? $d); };
         <div class="field">
             <label for="alamat_umkm">Alamat UMKM</label>
             <textarea id="alamat_umkm" name="alamat_umkm" rows="2" maxlength="500"><?= esc($old('alamat_umkm')) ?></textarea>
-        </div>
-
-        <div class="field-row">
-            <div class="field">
-                <label for="jam_buka">Jam Buka</label>
-                <input type="time" id="jam_buka" name="jam_buka"
-                       value="<?= esc($old('jam_buka')) ?>">
-            </div>
-            <div class="field">
-                <label for="jam_tutup">Jam Tutup</label>
-                <input type="time" id="jam_tutup" name="jam_tutup"
-                       value="<?= esc($old('jam_tutup')) ?>">
-            </div>
         </div>
 
         <div class="field">

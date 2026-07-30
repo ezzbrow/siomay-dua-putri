@@ -42,12 +42,6 @@
 
     <h1 class="cart-title">Keranjang</h1>
 
-    <?php if (!$tokoBuka): ?>
-        <div class="cart-warning">
-            Toko sedang tutup. <?= esc($alasanTutup) ?>
-        </div>
-    <?php endif; ?>
-
     <?php if (empty($cart['rows'])): ?>
         <div class="cart-empty-state">
             <p>Keranjang kosong.</p>
@@ -133,7 +127,6 @@
     .flash { padding:12px 16px; border-radius:12px; margin-bottom:12px; display:flex; align-items:center; gap:8px; font-weight:500; }
     .flash-err { background:#FCE6E6; color:#991B1B; }
     .flash-ok { background:#E6F6EC; color:#166534; }
-    .cart-warning { background:#FFF1D6; color:#92400E; padding:12px; border-radius:12px; margin-bottom:12px; }
     .cart-empty-state { text-align:center; padding:60px 0; color:#6B5B4A; }
     .cart-empty-state p { margin:0 0 16px; }
     .cart-list { list-style:none; padding:0; margin:0 0 20px; }
